@@ -1,5 +1,5 @@
 #!/bin/bash
-./branchless-fizzbuzz >test.txt
+./branchless-fizzbuzz > test.txt
 
 if cmp -s expected.txt test.txt; then
     echo "no regression"
