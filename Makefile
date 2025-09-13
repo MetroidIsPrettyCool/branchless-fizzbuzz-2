@@ -11,13 +11,16 @@ LDFLAGS = -gdwarf
 
 all: build/branchless_fizzbuzz
 
+build:
+	mkdir build
+
 build/branchless_fizzbuzz: build/branchless_fizzbuzz.o build/driver.o
 	$(LD) $(LDFLAGS) $^ -o $@
 
-build/branchless_fizzbuzz.o: src/branchless_fizzbuzz.s
+build/branchless_fizzbuzz.o: src/branchless_fizzbuzz.s | build
 	$(AS) $(ASFLAGS) $^ -o $@
 
-build/driver.o: src/driver.c
+build/driver.o: src/driver.c | build
 	$(CC) $(CFLAGS) $^ -c -o $@
 
 clean:
