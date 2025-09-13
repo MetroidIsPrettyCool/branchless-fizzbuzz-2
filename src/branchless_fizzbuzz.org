@@ -9,7 +9,7 @@ constraints:
 - No indirection not of the form ~[rdi] + disp64~
 - No mutating ~rdi~
 * Hardcoded Data Structure Sizes
-First, before we do anything, we need to hard-code the size of the output buffer.
+First, before we do anything else, we need to pick a size to hard-code for our output buffer.
 
 At present, this is constrained such that it should be at least $\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10}
 (2^{64} - 1) \rceil + 1 = 30$ bytes big, if we want to support all unsigned 64-bit integers.
@@ -18,7 +18,7 @@ At present, this is constrained such that it should be at least $\text{len}(\tex
   %assign BUFF_SIZE 30
 #+end_src
 * ~bfb_fill_buffer~
-First, our text section and function label headers:
+Okay, now we define our text section and function label headers:
 
 #+begin_src nasm :tangle yes
   section .text
@@ -27,8 +27,8 @@ First, our text section and function label headers:
   bfb_fill_buffer:
 #+end_src
 
-This is a function takes two arguments: a buffer to write the result to (must be at least ~30~ characters big), and the
-number to process. It returns nothing.
+This is a function that takes two arguments: a buffer to write the result to (must be at least ~30~ characters big), and
+the number to process. It returns nothing.
 
 Let's define that in a header file:
 
@@ -45,6 +45,8 @@ Let's define that in a header file:
 
   #endif
 #+end_src
+
+Let's start implementing our logic:
 
 The following registers are used by this program:
 
@@ -363,7 +365,7 @@ And with that, we're all done!
 #+end_src
 * The Driver
 Since this function implementation has no I/O or entry point, we need a small "driver" program to interface with it and
-print the results. Here's my implementation:
+print the results. Here's a simple one:
 
 #+begin_src c :tangle driver.c
   #include <stdint.h>
