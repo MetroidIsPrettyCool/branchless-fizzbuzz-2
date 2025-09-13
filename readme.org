@@ -8,9 +8,9 @@ A FizzBuzz implementation with...
 - No indirection not of the form ~[rdi] + disp64~
 - No mutating ~rdi~
 
-in the implementation of the "should we print Fizz, Buzz, FizzBuzz, or the number?" logic. It's all just bitwise
-manipulation and regular algebra, implemented in x64 assembly so I can sure the compiler isn't putting in any branches
-or memory indirects behind my back. Inspired by [[http://philcrissman.net/posts/eulers-fizzbuzz/][this really cool blog post]].
+in the "should we print Fizz, Buzz, FizzBuzz, or the number?" logic. It's all just bitwise manipulation and regular
+algebra; implemented in x64 assembly, so I can be sure the compiler isn't putting in any branches or memory indirects
+behind my back. Inspired by [[http://philcrissman.net/posts/eulers-fizzbuzz/][this really cool blog post]].
 
 See [[./src/branchless_fizzbuzz.org]] (or [[./src/branchless_fizzbuzz.html]]) for the low-level description, it contains the
 whole literate org-tangled source code for the project, intermixed with all my notes.
