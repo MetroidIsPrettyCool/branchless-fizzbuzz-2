@@ -1,55 +1,27 @@
 * What's the deal?
-This is a pretty simple implementation of 'FizzBuzz' in Linux x64 assembly. It contains no conditional branches (not in
-the binary, anyway) and implements all logic via lookup tables and an ingenious little algorithm borrowed from
-http://philcrissman.net/posts/eulers-fizzbuzz/, which immediately captured my attention the moment I started reading
-it. It's such an elegant idea!
+A FizzBuzz implementation with...
 
-There are two reasons I decided to implement this in assembly:
+- No branches
+- No jumps
+- No calls (except to the function itself)
+- No ~mov~ instructions where the source is a location in memory
+- No indirection not of the form ~[rdi] + disp64~
+- No mutating ~rdi~
 
-1. Attempting to implement the conditional logic-less algorithm in a language like C or Python or Ada or Bash or what
-   have you strikes me as cheating. The whole point of this is to avoid branching! Even C doesn't give us enough
-   control. Too many opportunities for glibc or CRT0.o to get statically linked and introduce unwanted instructions into
-   our otherwise "pure" binary.
+in the implementation of the "should we print Fizz, Buzz, FizzBuzz, or the number?" logic. It's all just bitwise
+manipulation and regular algebra, implemented in x64 assembly so I can sure the compiler isn't putting in any branches
+or memory indirects behind my back. Inspired by [[http://philcrissman.net/posts/eulers-fizzbuzz/][this really cool blog post]].
 
-   Furthermore, standard C doesn't really have any good code-repeat macros, and ~for~​/​~while~ loops are unquestionably
-   branches. Infinite goto loops are fine, but I wanted the program to halt on its own so as not to fill up my eshell
-   buffer too quickly and hang my editor. (Yeah it's a cop-out but I'm sticking to it.)
-2. I have very little x64 assembly experience, so I wanted to write more small but non-trivial (well, /less/ trivial)
-   programs to experiment with style, continue to familiarize myself with the Intel developer's guide, and the NASM
-   documentation.
-
-   You may notice, for example, that I've adopted a sort of "Hungarianesque" notation for my labels -- the result of
-   which is kind of ugly and uncoordinated. Better to know 'cause you've tried it than not!
-
-   I've also overused ~align~ directives in ~.data~ and ~.rodata~. Those are there entirely because I hadn't used
-   ~align~ before and wanted to tinker with it a little.
+See [[./src/branchless_fizzbuzz.org]] (or [[./src/branchless_fizzbuzz.html]]) for the low-level description, it contains the
+whole literate org-tangled source code for the project, intermixed with all my notes.
 * Building
-Run ~make~, ~make all~ or ~make branchless-fizzbuzz~ in the top (well, only) folder of the repo to build the
-executable. Requires NASM, ld and make. ~./branchless-fizzbuzz~ will run the binary.
-
-Running ~./quick-regression-test.sh~ will compare the output to a file called ~expected.txt~ and report "regression!" if
-they're different, else "no regression".
+Run ~make~ in the repository root. Requires YASM, gcc and make. ~./build/branchless_fizzbuzz~ will run the binary.
 
 To remove all build products, run ~make clean~. To remove all build products and the binary, run ~make pristine~.
 * Potential Further Improvements
-1. Refactor out the lookup tables. LUTs are conditionals in all but name. Ideally there should be no memory indirection
-   outside of: as a parameter for ~SYS_WRITE~, itoa, and temporary variable storage.
-2. Settle on and standardize a saner name format for labels.
-3. Remove various bits of redundancy.
-4. Clean up makefile. It was a hack job just to get the thing to build, and it's not up my personal standards.
-5. Further extensibility to other prime number-word associations. (Compiler, anyone?)
-* Other Notes
-Yes, I know that "branchless" is a misnomer here. This is not "branchless fizzbuzz" but instead
-"conditional-branches-in-userspace-less fizzbuzz" There are 3,000 ~call~ instructions, 3,000 ~ret~ instructions and
-1,001 ~syscall~ instructions in the assembled binary, and behind the x64 ~syscall~ API there are doubtless hundreds and
-thousands of conditional and unconditional branches going on in ring 0.
-
-FWIW: ~itoa~ could be trivially inlined, and ~fizzorbuzzorbothorneither~ (verbose on purpose, I thought it was funny)
-could be inlined without too much difficulty -- though doing so would inflate the resulting binary quite a bit (from
-20,776 to 91,936 bytes as of my last test) -- which would leave us with only the ~syscall~​s.
-
-There is, to my knowledge, no way to do any kind of I/O in userspace without ~syscall~​s. We could batch our writes and
-reduce their number, but we can't eliminate them entirely.
-
-Still, this program only ever executes ~syscall~ after setting ~rax~ to an immediate, which upholds the "no conditional
-logic in userspace" part of "branchless", for whatever that's worth.
+1. Have the assembly portion return a pointer the beginning of the string, instead of just /assuming/ it's the same as
+   the start of the buffer. Would allow us to elide all those leading 0s.
+2. Replace the loop in the C driver with a ~%rep~ loop in the assembly portion of the project. If taken with #1, would
+   probably involve passing a pair of buffers: one to write data to, and another to write pointers to the starts of each
+   string. First buffer should probably be 32-byte aligned.
+3. Get better at assembly and find better and arcane-er ways to implement everything.

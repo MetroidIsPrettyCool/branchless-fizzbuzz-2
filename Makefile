@@ -1,20 +1,27 @@
-AS = nasm
-ASFLAGS = -f elf64 -gdwarf
+AS = yasm
+ASFLAGS = -f elf64 -gdwarf2
 
-LD = ld
+CC = gcc
+CFLAGS = -Wall -pedantic -std=c23 -gdwarf -Isrc
+
+LD = gcc
+LDFLAGS = -gdwarf
 
 .PHONY: all clean pristine
 
-all: branchless-fizzbuzz
+all: build/branchless_fizzbuzz
 
-branchless-fizzbuzz: branchless-fizzbuzz.o
-	$(LD) $^ -o $@
+build/branchless_fizzbuzz: build/branchless_fizzbuzz.o build/driver.o
+	$(LD) $(LDFLAGS) $^ -o $@
 
-branchless-fizzbuzz.o: branchless-fizzbuzz.s
+build/branchless_fizzbuzz.o: src/branchless_fizzbuzz.s
 	$(AS) $(ASFLAGS) $^ -o $@
 
+build/driver.o: src/driver.c
+	$(CC) $(CFLAGS) $^ -c -o $@
+
 clean:
-	rm -f branchless-fizzbuzz.o
+	rm -f build/*.o
 
 pristine: clean
-	rm -f branchless-fizzbuzz
+	rm -f build/branchless_fizzbuzz

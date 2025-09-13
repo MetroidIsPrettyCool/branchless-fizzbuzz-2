@@ -1,1 +1,3 @@
 tests/*.txt -diff
+src/branchless_fizzbuzz.html -diff
+src/branchless_fizzbuzz.html linguist-generated
