@@ -47,13 +47,13 @@ First, before we do anything else, we need to pick a size to hard-code for our o
 At present, this is constrained such that it should be at least $\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10}
 (2^{64} - 1) \rceil + 1 = 30$ bytes big, if we want to support all unsigned 64-bit integers.
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
   %assign BUFF_SIZE 30
 #+end_src
 * ~bfb_fill_buffer~
 Okay, now we define our text section and function label headers:
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
   section .text
 
   global bfb_fill_buffer
@@ -65,7 +65,7 @@ the number to process. It returns nothing.
 
 Let's define that in a header file:
 
-#+begin_src c :tangle branchless_fizzbuzz.h
+#+begin_src c :tangle src/branchless_fizzbuzz.h
   #ifndef BRANCHLESS_FIZZBUZZ_H
   #define BRANCHLESS_FIZZBUZZ_H
 
@@ -123,7 +123,7 @@ Registers:
 
 #+end_center
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
   ;; initial setup
           mov rax, rsi            ; move our number into the bottom half of the same
           mov rcx, 10             ; our base
@@ -158,7 +158,7 @@ Registers:
 
 #+end_center
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
           xor rdx, rdx            ; zero upper half of rdx:rax
           mov rax, rsi            ; rdx:rax = rsi^1
           mul rsi                 ; rdx:rax = rsi^2
@@ -207,7 +207,7 @@ We'll use this to write the "head" of the buffer as follows:
 
 But before we do any of that, we'll copy the value in ~rdx~ to ~rcx~ for safekeeping.
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
           mov rcx, rdx
 #+end_src
 
@@ -232,7 +232,7 @@ Registers:
 
 #+end_center
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
   ;; determine if rdx (rcx) is 1 or not
           mov rdx, rcx            ; restore rdx
           dec edx
@@ -281,7 +281,7 @@ Registers:
 
 #+end_center
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
           mov rdx, rcx            ; restore rdx
           xor rax, rax            ; zero rax, we'll compose our result in here
   ;; set up as though this weren't 6 or 10
@@ -343,7 +343,7 @@ Registers:
 
 #+end_center
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
   ;; is it 0 or 6? or is it something else?
           dec rcx
           mov rax, rcx
@@ -393,14 +393,14 @@ Registers:
 
 And with that, we're all done!
 
-#+begin_src nasm :tangle yes
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s
           ret
 #+end_src
 * The Driver
 Since this function implementation has no I/O or entry point, we need a small "driver" program to interface with it and
 print the results. Here's a simple one:
 
-#+begin_src c :tangle driver.c
+#+begin_src c :tangle src/driver.c
   #include <stdint.h>
   #include <stdio.h>
   #include <stdlib.h>
