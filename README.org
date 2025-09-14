@@ -2,9 +2,9 @@
 This README you're looking at right now is an [[https://orgmode.org/][org]] document. GitHub have parsed it into their custom extended markdown
 format for your convenience, and they haven't done it very well.
 
-Please clone this repo and take a look at [[./branchless_fizzbuzz.html]] instead; or open this file with [[https://www.gnu.org/software/emacs/download.html][GNU Emacs]] if you
-don't mind seeing some of the guts. (Blocks marked for noexport, formatting configuration, other stuff that makes the
-HTML more legible and this less.)
+Please clone this repo and take a look at [[./README.html]] instead; or open this file with [[https://www.gnu.org/software/emacs/download.html][GNU Emacs]] if you don't mind
+seeing some of the guts. (Blocks marked for noexport, formatting configuration, other stuff that makes the HTML more
+legible and this less.)
 * Introduction
 ** Rationale
 Okay, so a couple years back I was reading this great blog post titled "Euler's Fizzbuzz" (which you can find here:
