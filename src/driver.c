@@ -13,7 +13,4 @@ int main(int argc, char* argv[]) {
 
         puts(buffer);
     }
-
-    bfb_fill_buffer(buffer, UINT64_MAX / 10);
-    puts(buffer);
 }
