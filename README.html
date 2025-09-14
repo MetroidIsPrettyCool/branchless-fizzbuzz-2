@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-09-13 Sat 20:26 -->
+<!-- 2025-09-14 Sun 00:04 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>&lrm;</title>
@@ -231,34 +231,34 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org8b347be">1. Introduction</a></li>
-<li><a href="#org8966f60">2. Implementation</a>
+<li><a href="#orge5cbc94">1. Introduction</a></li>
+<li><a href="#org7884fef">2. Implementation</a>
 <ul>
-<li><a href="#org7acf8dd">2.1. The Rules</a></li>
-<li><a href="#orgebfe918">2.2. Project Structure</a></li>
-<li><a href="#org2162995">2.3. The Driver</a></li>
-<li><a href="#org2f1951d">2.4. <code>bfb_fill_buffer</code></a>
+<li><a href="#orga5c17c0">2.1. The Rules</a></li>
+<li><a href="#orge032678">2.2. Project Structure</a></li>
+<li><a href="#org4ff2c04">2.3. The Driver</a></li>
+<li><a href="#org7bac9d2">2.4. <code>bfb_fill_buffer</code></a>
 <ul>
-<li><a href="#org5b68061">2.4.1. Parameters</a></li>
-<li><a href="#org75bd37b">2.4.2. Buffer Size</a></li>
-<li><a href="#org462851c">2.4.3. Setup</a></li>
-<li><a href="#orgc4dcf32">2.4.4. i to a</a></li>
-<li><a href="#org772ec0f">2.4.5. Euler&rsquo;s FizzBuzz</a></li>
-<li><a href="#orgd305564">2.4.6. Logic Strategies</a></li>
-<li><a href="#org1466010">2.4.7. &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</a></li>
-<li><a href="#orgd0964c0">2.4.8. Byte 4</a></li>
-<li><a href="#orgd45237d">2.4.9. &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</a></li>
+<li><a href="#org7682319">2.4.1. Parameters</a></li>
+<li><a href="#orgf9679cc">2.4.2. Buffer Size</a></li>
+<li><a href="#orge864c94">2.4.3. Setup</a></li>
+<li><a href="#org0fa213f">2.4.4. i to a</a></li>
+<li><a href="#orga94eb5a">2.4.5. Euler&rsquo;s FizzBuzz</a></li>
+<li><a href="#org840998b">2.4.6. Logic Strategies</a></li>
+<li><a href="#orgb74ffa2">2.4.7. &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</a></li>
+<li><a href="#org9f1725d">2.4.8. Byte 4</a></li>
+<li><a href="#org43b1123">2.4.9. &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org6154d00">3. Building</a></li>
-<li><a href="#org4f0cba3">4. Potential Further Improvements</a></li>
+<li><a href="#org1ff9aee">3. Building</a></li>
+<li><a href="#orgc3e54e7">4. Potential Further Improvements</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org8b347be" class="outline-2">
-<h2 id="org8b347be"><span class="section-number-2">1.</span> Introduction</h2>
+<div id="outline-container-orge5cbc94" class="outline-2">
+<h2 id="orge5cbc94"><span class="section-number-2">1.</span> Introduction</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Okay, so a couple years back I was reading this great blog post titled &ldquo;Euler&rsquo;s Fizzbuzz&rdquo; (which you can find here:
@@ -298,12 +298,12 @@ I thought it&rsquo;d be fun to give that a try.
 </p>
 </div>
 </div>
-<div id="outline-container-org8966f60" class="outline-2">
-<h2 id="org8966f60"><span class="section-number-2">2.</span> Implementation</h2>
+<div id="outline-container-org7884fef" class="outline-2">
+<h2 id="org7884fef"><span class="section-number-2">2.</span> Implementation</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org7acf8dd" class="outline-3">
-<h3 id="org7acf8dd"><span class="section-number-3">2.1.</span> The Rules</h3>
+<div id="outline-container-orga5c17c0" class="outline-3">
+<h3 id="orga5c17c0"><span class="section-number-3">2.1.</span> The Rules</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 To be more specific than just &ldquo;no conditional logic&rdquo;, let&rsquo;s define a rule set for ourselves. We&rsquo;re not going to do any
@@ -329,8 +329,8 @@ interface with our FizzBuzz function and print the results.
 </p>
 </div>
 </div>
-<div id="outline-container-orgebfe918" class="outline-3">
-<h3 id="orgebfe918"><span class="section-number-3">2.2.</span> Project Structure</h3>
+<div id="outline-container-orge032678" class="outline-3">
+<h3 id="orge032678"><span class="section-number-3">2.2.</span> Project Structure</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 This project is split into two source files. The driver is written in C, and implements the outer loop and printing
@@ -338,7 +338,7 @@ logic; and our FizzBuzz function is written in x64 assembly, to avoid the compil
 behind our backs, and implements the following pseudocode logic:
 </p>
 
-<pre class="example" id="org7e262fe">
+<pre class="example" id="orgce4adbe">
 if n % 3 == 0 &amp;&amp; n % 5 != 0:
   return "Fizz"
 if n % 3 != 0 &amp;&amp; n % 5 == 0:
@@ -350,8 +350,8 @@ if n % 3 != 0 &amp;&amp; n % 5 != 0:
 </pre>
 </div>
 </div>
-<div id="outline-container-org2162995" class="outline-3">
-<h3 id="org2162995"><span class="section-number-3">2.3.</span> The Driver</h3>
+<div id="outline-container-org4ff2c04" class="outline-3">
+<h3 id="org4ff2c04"><span class="section-number-3">2.3.</span> The Driver</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 The implementation of the driver is pretty simple. We import some standard headers:
@@ -382,25 +382,33 @@ and then we just allocate a character buffer for our assembly function, call it 
 <pre class="src src-c"><span style="color: #268bd2;">int</span> <span style="color: #b58900;">main</span>(<span style="color: #268bd2;">int</span> <span style="color: #6c71c4;">argc</span>, <span style="color: #268bd2;">char</span>* <span style="color: #6c71c4;">argv</span>[]) {
     <span style="color: #268bd2;">char</span> <span style="color: #6c71c4;">buffer</span>[MIN_BUFFER_SIZE] = {0};
 
-    <span style="color: #859900;">for</span> (<span style="color: #268bd2;">uint64_t</span> <span style="color: #6c71c4;">i</span> = 1; i != 1000; i++) {
-        bfb_fill_buffer(buffer, i);
+    bfb_fill_buffer(buffer, UINT64_MAX - 1);
 
-        puts(buffer);
-    }
+    puts(buffer);
+
+    bfb_fill_buffer(buffer, UINT64_MAX);
+
+    puts(buffer);
+
+    <span style="color: #93a1a1; font-style: italic;">/* </span><span style="color: #93a1a1; font-style: italic;">for (uint64_t i = 1; i != 1000; i++) {</span><span style="color: #93a1a1; font-style: italic;"> */</span>
+    <span style="color: #93a1a1; font-style: italic;">/*     </span><span style="color: #93a1a1; font-style: italic;">bfb_fill_buffer(buffer, i);</span><span style="color: #93a1a1; font-style: italic;"> */</span>
+
+    <span style="color: #93a1a1; font-style: italic;">/*     </span><span style="color: #93a1a1; font-style: italic;">puts(buffer);</span><span style="color: #93a1a1; font-style: italic;"> */</span>
+    <span style="color: #93a1a1; font-style: italic;">/* </span><span style="color: #93a1a1; font-style: italic;">}</span><span style="color: #93a1a1; font-style: italic;"> */</span>
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org2f1951d" class="outline-3">
-<h3 id="org2f1951d"><span class="section-number-3">2.4.</span> <code>bfb_fill_buffer</code></h3>
+<div id="outline-container-org7bac9d2" class="outline-3">
+<h3 id="org7bac9d2"><span class="section-number-3">2.4.</span> <code>bfb_fill_buffer</code></h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 Implementing <code>bfb_fill_buffer</code> is, of course, significantly more involved.
 </p>
 </div>
-<div id="outline-container-org5b68061" class="outline-4">
-<h4 id="org5b68061"><span class="section-number-4">2.4.1.</span> Parameters</h4>
+<div id="outline-container-org7682319" class="outline-4">
+<h4 id="org7682319"><span class="section-number-4">2.4.1.</span> Parameters</h4>
 <div class="outline-text-4" id="text-2-4-1">
 <p>
 First, let&rsquo;s define our parameters. As you can see from the driver code, we need two things: a buffer to write to, and
@@ -419,8 +427,8 @@ Let&rsquo;s define that in our header file:
 </div>
 </div>
 </div>
-<div id="outline-container-org75bd37b" class="outline-4">
-<h4 id="org75bd37b"><span class="section-number-4">2.4.2.</span> Buffer Size</h4>
+<div id="outline-container-orgf9679cc" class="outline-4">
+<h4 id="orgf9679cc"><span class="section-number-4">2.4.2.</span> Buffer Size</h4>
 <div class="outline-text-4" id="text-2-4-2">
 <p>
 Second, let&rsquo;s hardcode the size of the output buffer. (Without conditional logic, we have no means to terminate loops &#x2013;
@@ -454,8 +462,8 @@ Let&rsquo;s encode this into our header file and into our assembly source:
 </div>
 </div>
 </div>
-<div id="outline-container-org462851c" class="outline-4">
-<h4 id="org462851c"><span class="section-number-4">2.4.3.</span> Setup</h4>
+<div id="outline-container-orge864c94" class="outline-4">
+<h4 id="orge864c94"><span class="section-number-4">2.4.3.</span> Setup</h4>
 <div class="outline-text-4" id="text-2-4-3">
 <p>
 With that out of the way, let&rsquo;s actually start writing our assembly function. Here&rsquo;s our header:
@@ -537,8 +545,8 @@ use the stack.)
 </div>
 </div>
 </div>
-<div id="outline-container-orgc4dcf32" class="outline-4">
-<h4 id="orgc4dcf32"><span class="section-number-4">2.4.4.</span> i to a</h4>
+<div id="outline-container-org0fa213f" class="outline-4">
+<h4 id="org0fa213f"><span class="section-number-4">2.4.4.</span> i to a</h4>
 <div class="outline-text-4" id="text-2-4-4">
 <p>
 The first bit of logic we need to implement is to perform an integer-to-string conversion on <code>rsi</code>, writing the result
@@ -615,12 +623,16 @@ Registers used:
 </div>
 </div>
 </div>
-<div id="outline-container-org772ec0f" class="outline-4">
-<h4 id="org772ec0f"><span class="section-number-4">2.4.5.</span> Euler&rsquo;s FizzBuzz</h4>
+<div id="outline-container-orga94eb5a" class="outline-4">
+<h4 id="orga94eb5a"><span class="section-number-4">2.4.5.</span> Euler&rsquo;s FizzBuzz</h4>
 <div class="outline-text-4" id="text-2-4-5">
 <p>
 Next, we&rsquo;ll use the &ldquo;Euler&rsquo;s FizzBuzz&rdquo; algorithm (\(n^4 \text{ mod } 15\)) to determine whether 3 and/or 5 are prime
-factors of <code>rsi</code>:
+factors of <code>rsi</code>. Since we want to handle all possible 64-bit integers as input, we&rsquo;ll take advantage of the fact that
+<a href="https://en.wikipedia.org/wiki/Modular_exponentiation">modular exponentiation</a> allows us to reduce <code>x</code> at any point during the exponentiation, and take the modulus of <code>rsi</code>
+right before we exponentiate it, preventing any overflows or <code>#DE</code> exceptions. (The maximum possible result after that
+modulus &#x2013; 15 &#x2013; raised to the fourth power is only 50625, nowhere <i>near</i> <code>UINT64_MAX</code>, so we don&rsquo;t have to perform any
+more expensive division operations until the very end.)
 </p>
 
 <div class="org-center">
@@ -670,21 +682,19 @@ Registers used:
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">zero upper half of rdx:rax
-</span><span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rsi</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = rsi^1
-</span><span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rsi</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = rsi^2
-</span><span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rsi</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = rsi^3
-</span><span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rsi</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = rsi^4
-</span><span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #268bd2;">15</span>
-<span style="color: #6c71c4;">div</span> <span style="color: #6c71c4;">rcx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">final remainder is now in rdx
-</span><span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">copy that result into rcx for safekeeping</span>
+<pre class="src src-nasm"><span style="color: #93a1a1; font-style: italic;">;;</span><span style="color: #93a1a1; font-style: italic;">
+</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #268bd2;">15</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">magic constant, see aforementioned blog post
+</span>        <span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">zero upper half of rdx:rax
+</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rsi</span>
+        <span style="color: #6c71c4;">div</span> <span style="color: #6c71c4;">rcx</span>
+        <span style="color: #6c71c4;">xchg</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rax</span>
+        <span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = rsi mod 15
+</span>
+        <span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rax</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = (rsi mod 15)^2
+</span>        <span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rax</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = (rsi mod 15)^4
+</span>        <span style="color: #6c71c4;">div</span> <span style="color: #6c71c4;">rcx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx = (rsi^4) mod 15
+</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">copy the result into rcx for safekeeping</span>
 </pre>
-</div>
-
-<div class="org-center">
-<p>
-(We <code>mul</code> with <code>rsi</code> three times, instead of <code>mul rax</code> two times, because the latter will work for all 64-bit integers.)
-</p>
 </div>
 
 <p>
@@ -896,8 +906,8 @@ Where &rsquo;?&rsquo; indicates we don&rsquo;t care what gets written.
 </div>
 </div>
 </div>
-<div id="outline-container-orgd305564" class="outline-4">
-<h4 id="orgd305564"><span class="section-number-4">2.4.6.</span> Logic Strategies</h4>
+<div id="outline-container-org840998b" class="outline-4">
+<h4 id="org840998b"><span class="section-number-4">2.4.6.</span> Logic Strategies</h4>
 <div class="outline-text-4" id="text-2-4-6">
 <p>
 Now that we know the factors of <code>rsi</code>, we can use that information to compose output bytes for each of the
@@ -917,7 +927,7 @@ In cases where there are only two possible options for what we&rsquo;ll want to 
 byte 8), we can use the following pseudocode procedure to set a register based on a condition:
 </p>
 
-<pre class="example" id="org87d31a3">
+<pre class="example" id="org1f9401e">
 let is_a_or_b = 0 or 1, depending
 mask = is_a_or_b - 1
 
@@ -942,7 +952,7 @@ otherwise (<b>note that that&rsquo;s reversed!</b>).
 In pseudocode:
 </p>
 
-<pre class="example" id="org9b4b245">
+<pre class="example" id="orgf681703">
 let is_a_or_b = 0 or 1, depending (value doesn't matter if it's c)
 mask = is_a_or_b - 1
 
@@ -973,8 +983,8 @@ between different characters.
 </p>
 </div>
 </div>
-<div id="outline-container-org1466010" class="outline-4">
-<h4 id="org1466010"><span class="section-number-4">2.4.7.</span> &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</h4>
+<div id="outline-container-orgb74ffa2" class="outline-4">
+<h4 id="orgb74ffa2"><span class="section-number-4">2.4.7.</span> &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</h4>
 <div class="outline-text-4" id="text-2-4-7">
 <p>
 For bytes 2, 3, 6, 7, and 8; we only need to discriminate depending on if <code>rdx</code> is equal to <code>1</code>, writing a <code>'0'</code> if so;
@@ -1056,8 +1066,8 @@ Registers used:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd0964c0" class="outline-4">
-<h4 id="orgd0964c0"><span class="section-number-4">2.4.8.</span> Byte 4</h4>
+<div id="outline-container-org9f1725d" class="outline-4">
+<h4 id="org9f1725d"><span class="section-number-4">2.4.8.</span> Byte 4</h4>
 <div class="outline-text-4" id="text-2-4-8">
 <p>
 For byte 4, the only byte where we need to distinguish based on the intended output&rsquo;s <i>length,</i> we can use bit position
@@ -1138,8 +1148,8 @@ Registers:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd45237d" class="outline-4">
-<h4 id="orgd45237d"><span class="section-number-4">2.4.9.</span> &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</h4>
+<div id="outline-container-org43b1123" class="outline-4">
+<h4 id="org43b1123"><span class="section-number-4">2.4.9.</span> &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</h4>
 <div class="outline-text-4" id="text-2-4-9">
 <p>
 Finally, for bytes 0, 1 and 5, we need to discriminate based on whether <code>rdx</code> is equal to <code>1</code>, or if it&rsquo;s equal to <code>10</code>,
@@ -1329,8 +1339,8 @@ And with that, we&rsquo;re all done!
 </div>
 </div>
 </div>
-<div id="outline-container-org6154d00" class="outline-2">
-<h2 id="org6154d00"><span class="section-number-2">3.</span> Building</h2>
+<div id="outline-container-org1ff9aee" class="outline-2">
+<h2 id="org1ff9aee"><span class="section-number-2">3.</span> Building</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 This project requires make, YASM, gcc, and mkdir for building, and targets only systems which use the System V ABI.
@@ -1347,8 +1357,8 @@ from the build directory, run <code>make pristine</code>.
 </p>
 </div>
 </div>
-<div id="outline-container-org4f0cba3" class="outline-2">
-<h2 id="org4f0cba3"><span class="section-number-2">4.</span> Potential Further Improvements</h2>
+<div id="outline-container-orgc3e54e7" class="outline-2">
+<h2 id="orgc3e54e7"><span class="section-number-2">4.</span> Potential Further Improvements</h2>
 <div class="outline-text-2" id="text-4">
 <ol class="org-ol">
 <li>Correct the logic which leads to a FPE with sufficently large values of <code>i</code> (​<code>rsi</code>​)</li>
@@ -1363,7 +1373,7 @@ string. First buffer should probably be 32-byte aligned.</li>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2025-09-13 Sat 20:26</p>
+<p class="date">Created: 2025-09-14 Sun 00:04</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

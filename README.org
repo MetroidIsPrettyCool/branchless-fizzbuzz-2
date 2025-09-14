@@ -211,7 +211,11 @@ Registers used:
 #+end_src
 *** Euler's FizzBuzz
 Next, we'll use the "Euler's FizzBuzz" algorithm ($n^4 \text{ mod } 15$) to determine whether 3 and/or 5 are prime
-factors of ~rsi~:
+factors of ~rsi~. Since we want to handle all possible 64-bit integers as input, we'll take advantage of the fact that
+[[https://en.wikipedia.org/wiki/Modular_exponentiation][modular exponentiation]] allows us to reduce ~x~ at any point during the exponentiation, and take the modulus of ~rsi~
+right before we exponentiate it, preventing any overflows or ~#DE~ exceptions. (The maximum possible result after that
+modulus -- 15 -- raised to the fourth power is only 50625, nowhere /near/ ~UINT64_MAX~, so we don't have to perform any
+more expensive division operations until the very end.)
 
 #+begin_center
 Registers used:
@@ -230,19 +234,19 @@ Registers used:
 #+end_center
 
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
+  ;;
+          mov rcx, 15             ; magic constant, see aforementioned blog post
           xor rdx, rdx            ; zero upper half of rdx:rax
-          mov rax, rsi            ; rdx:rax = rsi^1
-          mul rsi                 ; rdx:rax = rsi^2
-          mul rsi                 ; rdx:rax = rsi^3
-          mul rsi                 ; rdx:rax = rsi^4
-          mov rcx, 15
-          div rcx                 ; final remainder is now in rdx
-          mov rcx, rdx            ; copy that result into rcx for safekeeping
-#+end_src
+          mov rax, rsi
+          div rcx
+          xchg rdx, rax
+          xor rdx, rdx            ; rdx:rax = rsi mod 15
 
-#+begin_center
-(We ~mul~ with ~rsi~ three times, instead of ~mul rax~ two times, because the latter will work for all 64-bit integers.)
-#+end_center
+          mul rax                 ; rdx:rax = (rsi mod 15)^2
+          mul rax                 ; rdx:rax = (rsi mod 15)^4
+          div rcx                 ; rdx = (rsi^4) mod 15
+          mov rcx, rdx            ; copy the result into rcx for safekeeping
+#+end_src
 
 The result of this procedure leaves the ~rdx~ register containing one of four possible values:
 
