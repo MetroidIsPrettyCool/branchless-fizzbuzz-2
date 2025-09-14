@@ -535,10 +535,9 @@ To build, just clone the repo, navigate to the root directory, and run ~make~. T
 To remove all build products from the build directory, run ~make clean~. To remove all build products /and/ the binary
 from the build directory, run ~make pristine~.
 * Potential Further Improvements
-1. Correct the logic which leads to a FPE with sufficently large values of ~i~ (​~rsi~​)
-2. Have the assembly portion return a pointer the beginning of the string, instead of just /assuming/ it's the same as
+1. Have the assembly portion return a pointer the beginning of the string, instead of just /assuming/ it's the same as
    the start of the buffer. Would allow us to elide all those leading 0s.
-3. Replace the loop in the C driver with a ~%rep~ loop in the assembly portion of the project. If taken with #1, would
+2. Replace the loop in the C driver with a ~%rep~ loop in the assembly portion of the project. If taken with #1, would
    probably involve passing a pair of buffers: one to write data to, and another to write pointers to the starts of each
    string. First buffer should probably be 32-byte aligned.
-4. Get better at assembly and find better and arcane-er ways to implement everything.
+3. Get better at assembly and find better and arcane-er ways to implement everything.
