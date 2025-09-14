@@ -1,20 +1,20 @@
 %assign BUFF_SIZE 30
 
-section .text
+section .text                   ; start of text section, elided from html
 
 global bfb_fill_buffer
 bfb_fill_buffer:
 
 ;; initial setup
-        mov rax, rsi            ; move our number into the bottom half of the same
-        mov rcx, 10             ; our base
+        mov rax, rsi            ; move our number into the bottom half of the rdx:rax register pair
+        mov rcx, 10             ; we're doing a base 10 itoa
 ;; repeat for every digit
 %assign i BUFF_SIZE - 2
-%rep BUFF_SIZE - 8 - 1 - 1
+%rep BUFF_SIZE - 8 - 1 - 1      ; the size of the buffer, minus strlen("FizzBuzz\0"), minus the final NULL terminator
         xor rdx, rdx            ; zero the top half of rdx:rax
         div rcx                 ; rax now contains the quotient, and rdx the remainder
         add rdx, '0'
-        mov byte [rdi + i], dl
+        mov byte [rdi + i], dl  ; write to the buffer
 %assign i i-1
 %endrep
 ;; cleanup
@@ -27,8 +27,7 @@ mul rsi                 ; rdx:rax = rsi^3
 mul rsi                 ; rdx:rax = rsi^4
 mov rcx, 15
 div rcx                 ; final remainder is now in rdx
-
-mov rcx, rdx
+mov rcx, rdx            ; copy that result into rcx for safekeeping
 
 ;; determine if rdx (rcx) is 1 or not
         mov rdx, rcx            ; restore rdx
