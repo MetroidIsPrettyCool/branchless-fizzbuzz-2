@@ -8,6 +8,10 @@
 int main(int argc, char* argv[]) {
     char buffer[MIN_BUFFER_SIZE] = {0};
 
+    bfb_fill_buffer(buffer, UINT64_MAX - 1);
+
+    puts(buffer);
+
     bfb_fill_buffer(buffer, UINT64_MAX);
 
     puts(buffer);
