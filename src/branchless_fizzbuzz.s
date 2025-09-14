@@ -20,18 +20,17 @@ bfb_fill_buffer:
 ;; cleanup
         mov byte [rdi + BUFF_SIZE - 1], 0 ; null-terminate the buffer
 
-;;
-        mov rcx, 15             ; magic constant, see aforementioned blog post
-        xor rdx, rdx            ; zero upper half of rdx:rax
-        mov rax, rsi
-        div rcx
-        xchg rdx, rax
-        xor rdx, rdx            ; rdx:rax = rsi mod 15
+mov rcx, 15             ; magic constant, see aforementioned blog post
+xor rdx, rdx            ; zero upper half of rdx:rax
+mov rax, rsi
+div rcx
+xchg rdx, rax
+xor rdx, rdx            ; rdx:rax = rsi mod 15
 
-        mul rax                 ; rdx:rax = (rsi mod 15)^2
-        mul rax                 ; rdx:rax = (rsi mod 15)^4
-        div rcx                 ; rdx = (rsi^4) mod 15
-        mov rcx, rdx            ; copy the result into rcx for safekeeping
+mul rax                 ; rdx:rax = (rsi mod 15)^2
+mul rax                 ; rdx:rax = (rsi mod 15)^4
+div rcx                 ; rdx = (rsi^4) mod 15
+mov rcx, rdx            ; copy the result into rcx for safekeeping
 
 ;; determine if rdx (rcx) is 1 or not
         mov rdx, rcx            ; restore rdx

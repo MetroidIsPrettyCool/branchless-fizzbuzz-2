@@ -234,7 +234,6 @@ Registers used:
 #+end_center
 
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
-  ;;
           mov rcx, 15             ; magic constant, see aforementioned blog post
           xor rdx, rdx            ; zero upper half of rdx:rax
           mov rax, rsi
