@@ -8,9 +8,12 @@
 int main(int argc, char* argv[]) {
     char buffer[MIN_BUFFER_SIZE] = {0};
 
-    for (uint64_t i = 1; i != 1000; i++) {
+    for (uint64_t i = 1; i != UINT64_MAX; i++) {
         bfb_fill_buffer(buffer, i);
 
         puts(buffer);
     }
+
+    bfb_fill_buffer(buffer, UINT64_MAX);
+    puts(buffer);
 }
