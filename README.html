@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-09-13 Sat 20:05 -->
+<!-- 2025-09-13 Sat 20:26 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>&lrm;</title>
@@ -231,45 +231,40 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orge846025">1. Introduction</a>
+<li><a href="#org8b347be">1. Introduction</a></li>
+<li><a href="#org8966f60">2. Implementation</a>
 <ul>
-<li><a href="#orgbf7a39d">1.1. Rationale</a></li>
+<li><a href="#org7acf8dd">2.1. The Rules</a></li>
+<li><a href="#orgebfe918">2.2. Project Structure</a></li>
+<li><a href="#org2162995">2.3. The Driver</a></li>
+<li><a href="#org2f1951d">2.4. <code>bfb_fill_buffer</code></a>
+<ul>
+<li><a href="#org5b68061">2.4.1. Parameters</a></li>
+<li><a href="#org75bd37b">2.4.2. Buffer Size</a></li>
+<li><a href="#org462851c">2.4.3. Setup</a></li>
+<li><a href="#orgc4dcf32">2.4.4. i to a</a></li>
+<li><a href="#org772ec0f">2.4.5. Euler&rsquo;s FizzBuzz</a></li>
+<li><a href="#orgd305564">2.4.6. Logic Strategies</a></li>
+<li><a href="#org1466010">2.4.7. &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</a></li>
+<li><a href="#orgd0964c0">2.4.8. Byte 4</a></li>
+<li><a href="#orgd45237d">2.4.9. &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</a></li>
 </ul>
 </li>
-<li><a href="#orgd87c1ff">2. Implementation</a>
-<ul>
-<li><a href="#org386a73a">2.1. Overview</a></li>
-<li><a href="#org6293311">2.2. The Driver</a></li>
-<li><a href="#org8a14818">2.3. <code>bfb_fill_buffer</code></a>
-<ul>
-<li><a href="#org6714665">2.3.1. Setup</a></li>
-<li><a href="#org082da58">2.3.2. i to a</a></li>
-<li><a href="#orgb575342">2.3.3. Euler&rsquo;s FizzBuzz</a></li>
-<li><a href="#org758431f">2.3.4. Logic Strategies</a></li>
-<li><a href="#org39d9077">2.3.5. &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</a></li>
-<li><a href="#orgdb2febe">2.3.6. Byte 4</a></li>
-<li><a href="#orgd0be3cd">2.3.7. &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a href="#org0221561">3. Building</a></li>
-<li><a href="#orgb4796e2">4. Potential Further Improvements</a></li>
+<li><a href="#org6154d00">3. Building</a></li>
+<li><a href="#org4f0cba3">4. Potential Further Improvements</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orge846025" class="outline-2">
-<h2 id="orge846025"><span class="section-number-2">1.</span> Introduction</h2>
+<div id="outline-container-org8b347be" class="outline-2">
+<h2 id="org8b347be"><span class="section-number-2">1.</span> Introduction</h2>
 <div class="outline-text-2" id="text-1">
-</div>
-<div id="outline-container-orgbf7a39d" class="outline-3">
-<h3 id="orgbf7a39d"><span class="section-number-3">1.1.</span> Rationale</h3>
-<div class="outline-text-3" id="text-1-1">
 <p>
 Okay, so a couple years back I was reading this great blog post titled &ldquo;Euler&rsquo;s Fizzbuzz&rdquo; (which you can find here:
 <a href="http://philcrissman.net/posts/eulers-fizzbuzz/">http://philcrissman.net/posts/eulers-fizzbuzz/</a>, read it!), which describes a really interesting technique for
-differentiating numbers by their prime factors with only simple integer arithmetic. One line of that post in particular,
-right at the start, has stuck in my mind for over a year since I fist read it:
+differentiating numbers by their prime factors with only simple integer arithmetic. One little piece of that post, right
+at the start, has been stuck in the back of my mind ever since I first read it:
 </p>
 
 <blockquote>
@@ -287,24 +282,32 @@ It is possible to write a function which uses no conditional logic at all, but w
 </blockquote>
 
 <p>
-&ldquo;No conditional logic&rdquo;, huh?
+&ldquo;No conditional logic&rdquo;, huh? Isn&rsquo;t that an interesting idea.
 </p>
 
 <p>
 Well, it follows from that, that if we can differentiate numbers based on their prime factors, we can use a lookup table
-to determine what to output for that number (&rsquo;Fizz&rsquo;, &rsquo;Buzz&rsquo;, &rsquo;FizzBuzz&rsquo;, or the i-to-a representation of the input); and
-since for every lookup table, there&rsquo;s an equivalent implementation with logic gates (and vice versa), we can implement
-the whole function without conditional logic. That means no branches, no tests, and no comparisons.
+to determine what to output for that number (&ldquo;Fizz&rdquo;, &ldquo;Buzz&rdquo;, &ldquo;FizzBuzz&rdquo;, or the <code>itoa</code> representation of the input); and
+it follows from <i>that</i> that, since there&rsquo;s an equivalent implementation with logic gates for every lookup table (and
+vice versa), we can implement the <b>whole function</b> without conditional logic. No branches, no tests, and no
+comparisons. We don&rsquo;t need &rsquo;em!
 </p>
 
 <p>
-I wanted to give that a try.
+I thought it&rsquo;d be fun to give that a try.
 </p>
-
-<hr />
-
+</div>
+</div>
+<div id="outline-container-org8966f60" class="outline-2">
+<h2 id="org8966f60"><span class="section-number-2">2.</span> Implementation</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org7acf8dd" class="outline-3">
+<h3 id="org7acf8dd"><span class="section-number-3">2.1.</span> The Rules</h3>
+<div class="outline-text-3" id="text-2-1">
 <p>
-To be more specific, we&rsquo;re not going to do any of the following in our implementation logic:
+To be more specific than just &ldquo;no conditional logic&rdquo;, let&rsquo;s define a rule set for ourselves. We&rsquo;re not going to do any
+of the following in our implementation:
 </p>
 
 <ul class="org-ul">
@@ -313,33 +316,29 @@ To be more specific, we&rsquo;re not going to do any of the following in our imp
 <li><code>rep</code> (or family),</li>
 <li><code>call</code> (or family),</li>
 <li><code>syscall</code>, <code>int</code>, or any other kind of trap (conditional or otherwise),</li>
-<li>or anything else that mutates <code>rip</code> in any ways besides advancing it to the next instruction;</li>
-<li><code>mov</code> any data from memory to anywhere else;</li>
-<li>perform an indirection of any form other than <code>[rdi] + disp64</code> (implicit or otherwise; that means <code>push</code> and <code>movs</code>
+<li>anything <i>else</i> that mutates <code>rip</code> in any way, besides advancing it to the next instruction;</li>
+<li><code>mov</code>​es from memory to anywhere else;</li>
+<li>perform indirections of any form other than <code>[rdi] + disp64</code> (implicit or otherwise &#x2013; that means <code>push</code> and <code>movs</code>
 and so forth),</li>
-<li><i>or</i> mutate <code>rdi</code> at any point, for any reason.</li>
+<li>mutate <code>rdi</code> at any point, for any reason</li>
 </ul>
 
 <p>
-That means we&rsquo;re gonna need something less pure to do stuff like I/O for us. We&rsquo;ll get to that.
+Because I/O is always gonna involve breaking at least <i>one</i> of these rules, we need an &ldquo;impure&rdquo; piece of driver code to
+interface with our FizzBuzz function and print the results.
 </p>
 </div>
 </div>
-</div>
-<div id="outline-container-orgd87c1ff" class="outline-2">
-<h2 id="orgd87c1ff"><span class="section-number-2">2.</span> Implementation</h2>
-<div class="outline-text-2" id="text-2">
-</div>
-<div id="outline-container-org386a73a" class="outline-3">
-<h3 id="org386a73a"><span class="section-number-3">2.1.</span> Overview</h3>
-<div class="outline-text-3" id="text-2-1">
+<div id="outline-container-orgebfe918" class="outline-3">
+<h3 id="orgebfe918"><span class="section-number-3">2.2.</span> Project Structure</h3>
+<div class="outline-text-3" id="text-2-2">
 <p>
-This project is split into two source files: an impure driver written in C, which implements the outer loop and printing
-logic; and a comparison-less function written in x64 assembly (to avoid the compiler doing anything against the rules
-behind our backs), which implements the following pseudocode logic:
+This project is split into two source files. The driver is written in C, and implements the outer loop and printing
+logic; and our FizzBuzz function is written in x64 assembly, to avoid the compiler doing anything against the rules
+behind our backs, and implements the following pseudocode logic:
 </p>
 
-<pre class="example" id="orgd3d550a">
+<pre class="example" id="org7e262fe">
 if n % 3 == 0 &amp;&amp; n % 5 != 0:
   return "Fizz"
 if n % 3 != 0 &amp;&amp; n % 5 == 0:
@@ -351,9 +350,9 @@ if n % 3 != 0 &amp;&amp; n % 5 != 0:
 </pre>
 </div>
 </div>
-<div id="outline-container-org6293311" class="outline-3">
-<h3 id="org6293311"><span class="section-number-3">2.2.</span> The Driver</h3>
-<div class="outline-text-3" id="text-2-2">
+<div id="outline-container-org2162995" class="outline-3">
+<h3 id="org2162995"><span class="section-number-3">2.3.</span> The Driver</h3>
+<div class="outline-text-3" id="text-2-3">
 <p>
 The implementation of the driver is pretty simple. We import some standard headers:
 </p>
@@ -393,17 +392,23 @@ and then we just allocate a character buffer for our assembly function, call it 
 </div>
 </div>
 </div>
-<div id="outline-container-org8a14818" class="outline-3">
-<h3 id="org8a14818"><span class="section-number-3">2.3.</span> <code>bfb_fill_buffer</code></h3>
-<div class="outline-text-3" id="text-2-3">
+<div id="outline-container-org2f1951d" class="outline-3">
+<h3 id="org2f1951d"><span class="section-number-3">2.4.</span> <code>bfb_fill_buffer</code></h3>
+<div class="outline-text-3" id="text-2-4">
 <p>
 Implementing <code>bfb_fill_buffer</code> is, of course, significantly more involved.
 </p>
+</div>
+<div id="outline-container-org5b68061" class="outline-4">
+<h4 id="org5b68061"><span class="section-number-4">2.4.1.</span> Parameters</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<p>
+First, let&rsquo;s define our parameters. As you can see from the driver code, we need two things: a buffer to write to, and
+the iteration number to process. Both are 64-bit; the former a pointer, the latter simply an unsigned integer.
+</p>
 
 <p>
-First, let&rsquo;s define our parameters. As you can see, we need two things from the driver: a buffer to write to, and the
-iteration number to process. Both are 64-bit; the former a pointer, the latter simply an unsigned integer. Let&rsquo;s define
-that in our header file:
+Let&rsquo;s define that in our header file:
 </p>
 
 <div class="org-src-container">
@@ -412,23 +417,30 @@ that in our header file:
 <span style="color: #268bd2;">void</span> <span style="color: #b58900;">bfb_fill_buffer</span>(<span style="color: #268bd2;">char</span>*, <span style="color: #268bd2;">uint64_t</span>);
 </pre>
 </div>
-
+</div>
+</div>
+<div id="outline-container-org75bd37b" class="outline-4">
+<h4 id="org75bd37b"><span class="section-number-4">2.4.2.</span> Buffer Size</h4>
+<div class="outline-text-4" id="text-2-4-2">
 <p>
-We also need to hardcode the size of the buffer, as without conditional logic we have no means to terminate loops &#x2013;
-everything is gonna have to be unrolled. This is constrained by our implementation logic; essentially, we want to be
-able to fit the itoa representation <code>UINT_64_MAX</code> into the right side of the buffer, and <code>strlen("FizzBuzz") + 1 = 9</code>
-characters into the left. This allows us to write the strings <code>"Fizz\0"</code>, <code>"Buzz\0"</code>, <code>"FizzBuzz\0"</code>, or <code>"000000000"</code>
-to the head of the buffer and get correct output (with no trailing garbage) after the former three cases, and ugly but
-technically valid 0-padded results for the latter.
+Second, let&rsquo;s hardcode the size of the output buffer. (Without conditional logic, we have no means to terminate loops &#x2013;
+everything is gonna have to be unrolled.)
 </p>
 
 <p>
-In other words, the minimum size of our buffers is \(\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10} (2^{64} - 1)
-\rceil + 1 = 30\) bytes.
+The minimum size is constrained to \(\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10} (2^{64} - 1) \rceil + 1 = 30\)
+bytes, as we want to be able to fit the <code>itoa</code> representation of <code>UINT_64_MAX</code> into the right side of the buffer and
+<code>strlen("FizzBuzz") + 1 = 9</code> characters into the left.
 </p>
 
 <p>
-Let&rsquo;s encode that into our header, and our assembly:
+This will allow us to write the strings <code>"Fizz\0"</code>, <code>"Buzz\0"</code>, <code>"FizzBuzz\0"</code>, or <code>"000000000"</code> to the head of the
+buffer and get correct output (with no trailing garbage) for the former three cases, and ugly but technically valid
+0-padded results for the latter.
+</p>
+
+<p>
+Let&rsquo;s encode this into our header file and into our assembly source:
 </p>
 
 <div class="org-src-container">
@@ -441,11 +453,12 @@ Let&rsquo;s encode that into our header, and our assembly:
 </pre>
 </div>
 </div>
-<div id="outline-container-org6714665" class="outline-4">
-<h4 id="org6714665"><span class="section-number-4">2.3.1.</span> Setup</h4>
-<div class="outline-text-4" id="text-2-3-1">
+</div>
+<div id="outline-container-org462851c" class="outline-4">
+<h4 id="org462851c"><span class="section-number-4">2.4.3.</span> Setup</h4>
+<div class="outline-text-4" id="text-2-4-3">
 <p>
-With that out of the way, let&rsquo;s define our assembly function. Here&rsquo;s our header:
+With that out of the way, let&rsquo;s actually start writing our assembly function. Here&rsquo;s our header:
 </p>
 
 <div class="org-src-container">
@@ -455,7 +468,7 @@ With that out of the way, let&rsquo;s define our assembly function. Here&rsquo;s
 </div>
 
 <p>
-The following registers are going to be used by this function:
+and here&rsquo;s the registers we&rsquo;re gonna use:
 </p>
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -524,9 +537,9 @@ use the stack.)
 </div>
 </div>
 </div>
-<div id="outline-container-org082da58" class="outline-4">
-<h4 id="org082da58"><span class="section-number-4">2.3.2.</span> i to a</h4>
-<div class="outline-text-4" id="text-2-3-2">
+<div id="outline-container-orgc4dcf32" class="outline-4">
+<h4 id="orgc4dcf32"><span class="section-number-4">2.4.4.</span> i to a</h4>
+<div class="outline-text-4" id="text-2-4-4">
 <p>
 The first bit of logic we need to implement is to perform an integer-to-string conversion on <code>rsi</code>, writing the result
 to the rightmost portion of our output buffer.
@@ -602,9 +615,9 @@ Registers used:
 </div>
 </div>
 </div>
-<div id="outline-container-orgb575342" class="outline-4">
-<h4 id="orgb575342"><span class="section-number-4">2.3.3.</span> Euler&rsquo;s FizzBuzz</h4>
-<div class="outline-text-4" id="text-2-3-3">
+<div id="outline-container-org772ec0f" class="outline-4">
+<h4 id="org772ec0f"><span class="section-number-4">2.4.5.</span> Euler&rsquo;s FizzBuzz</h4>
+<div class="outline-text-4" id="text-2-4-5">
 <p>
 Next, we&rsquo;ll use the &ldquo;Euler&rsquo;s FizzBuzz&rdquo; algorithm (\(n^4 \text{ mod } 15\)) to determine whether 3 and/or 5 are prime
 factors of <code>rsi</code>:
@@ -883,9 +896,9 @@ Where &rsquo;?&rsquo; indicates we don&rsquo;t care what gets written.
 </div>
 </div>
 </div>
-<div id="outline-container-org758431f" class="outline-4">
-<h4 id="org758431f"><span class="section-number-4">2.3.4.</span> Logic Strategies</h4>
-<div class="outline-text-4" id="text-2-3-4">
+<div id="outline-container-orgd305564" class="outline-4">
+<h4 id="orgd305564"><span class="section-number-4">2.4.6.</span> Logic Strategies</h4>
+<div class="outline-text-4" id="text-2-4-6">
 <p>
 Now that we know the factors of <code>rsi</code>, we can use that information to compose output bytes for each of the
 aforementioned positions.
@@ -904,7 +917,7 @@ In cases where there are only two possible options for what we&rsquo;ll want to 
 byte 8), we can use the following pseudocode procedure to set a register based on a condition:
 </p>
 
-<pre class="example" id="orgdae2776">
+<pre class="example" id="org87d31a3">
 let is_a_or_b = 0 or 1, depending
 mask = is_a_or_b - 1
 
@@ -929,7 +942,7 @@ otherwise (<b>note that that&rsquo;s reversed!</b>).
 In pseudocode:
 </p>
 
-<pre class="example" id="org40cbeed">
+<pre class="example" id="org9b4b245">
 let is_a_or_b = 0 or 1, depending (value doesn't matter if it's c)
 mask = is_a_or_b - 1
 
@@ -960,9 +973,9 @@ between different characters.
 </p>
 </div>
 </div>
-<div id="outline-container-org39d9077" class="outline-4">
-<h4 id="org39d9077"><span class="section-number-4">2.3.5.</span> &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</h4>
-<div class="outline-text-4" id="text-2-3-5">
+<div id="outline-container-org1466010" class="outline-4">
+<h4 id="org1466010"><span class="section-number-4">2.4.7.</span> &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</h4>
+<div class="outline-text-4" id="text-2-4-7">
 <p>
 For bytes 2, 3, 6, 7, and 8; we only need to discriminate depending on if <code>rdx</code> is equal to <code>1</code>, writing a <code>'0'</code> if so;
 and either a <code>'z'</code> (bytes 2, 3, 6 and 7) or <code>NULL</code> (byte 8) if not, so we can use the simple two-option procedure (with
@@ -1043,9 +1056,9 @@ Registers used:
 </div>
 </div>
 </div>
-<div id="outline-container-orgdb2febe" class="outline-4">
-<h4 id="orgdb2febe"><span class="section-number-4">2.3.6.</span> Byte 4</h4>
-<div class="outline-text-4" id="text-2-3-6">
+<div id="outline-container-orgd0964c0" class="outline-4">
+<h4 id="orgd0964c0"><span class="section-number-4">2.4.8.</span> Byte 4</h4>
+<div class="outline-text-4" id="text-2-4-8">
 <p>
 For byte 4, the only byte where we need to distinguish based on the intended output&rsquo;s <i>length,</i> we can use bit position
 1 in <code>rdx</code> to distinguish <code>6</code> and <code>10</code> from <code>0</code> and <code>1</code> (it&rsquo;s set in the former and unset in the latter), and bit
@@ -1125,9 +1138,9 @@ Registers:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd0be3cd" class="outline-4">
-<h4 id="orgd0be3cd"><span class="section-number-4">2.3.7.</span> &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</h4>
-<div class="outline-text-4" id="text-2-3-7">
+<div id="outline-container-orgd45237d" class="outline-4">
+<h4 id="orgd45237d"><span class="section-number-4">2.4.9.</span> &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</h4>
+<div class="outline-text-4" id="text-2-4-9">
 <p>
 Finally, for bytes 0, 1 and 5, we need to discriminate based on whether <code>rdx</code> is equal to <code>1</code>, or if it&rsquo;s equal to <code>10</code>,
 or if it&rsquo;s equal to <code>0</code> or <code>6</code>.
@@ -1316,8 +1329,8 @@ And with that, we&rsquo;re all done!
 </div>
 </div>
 </div>
-<div id="outline-container-org0221561" class="outline-2">
-<h2 id="org0221561"><span class="section-number-2">3.</span> Building</h2>
+<div id="outline-container-org6154d00" class="outline-2">
+<h2 id="org6154d00"><span class="section-number-2">3.</span> Building</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 This project requires make, YASM, gcc, and mkdir for building, and targets only systems which use the System V ABI.
@@ -1334,8 +1347,8 @@ from the build directory, run <code>make pristine</code>.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb4796e2" class="outline-2">
-<h2 id="orgb4796e2"><span class="section-number-2">4.</span> Potential Further Improvements</h2>
+<div id="outline-container-org4f0cba3" class="outline-2">
+<h2 id="org4f0cba3"><span class="section-number-2">4.</span> Potential Further Improvements</h2>
 <div class="outline-text-2" id="text-4">
 <ol class="org-ol">
 <li>Correct the logic which leads to a FPE with sufficently large values of <code>i</code> (​<code>rsi</code>​)</li>
@@ -1350,7 +1363,7 @@ string. First buffer should probably be 32-byte aligned.</li>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2025-09-13 Sat 20:05</p>
+<p class="date">Created: 2025-09-13 Sat 20:26</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

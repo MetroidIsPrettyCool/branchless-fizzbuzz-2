@@ -6,11 +6,10 @@ Please clone this repo and take a look at [[./README.html]] instead; or open thi
 seeing some of the guts. (Blocks marked for noexport, formatting configuration, other stuff that makes the HTML more
 legible and this less.)
 * Introduction
-** Rationale
 Okay, so a couple years back I was reading this great blog post titled "Euler's Fizzbuzz" (which you can find here:
 http://philcrissman.net/posts/eulers-fizzbuzz/, read it!), which describes a really interesting technique for
-differentiating numbers by their prime factors with only simple integer arithmetic. One line of that post in particular,
-right at the start, has stuck in my mind for over a year since I fist read it:
+differentiating numbers by their prime factors with only simple integer arithmetic. One little piece of that post, right
+at the start, has been stuck in the back of my mind ever since I first read it:
 
 #+begin_quote
 It is possible to write a function which uses no conditional logic at all, but which uses math to separate integers into
@@ -22,36 +21,37 @@ It is possible to write a function which uses no conditional logic at all, but w
 4. Those which have neither 3 nor 5 as factors
 #+end_quote
 
-"No conditional logic", huh?
+"No conditional logic", huh? Isn't that an interesting idea.
 
 Well, it follows from that, that if we can differentiate numbers based on their prime factors, we can use a lookup table
-to determine what to output for that number ('Fizz', 'Buzz', 'FizzBuzz', or the i-to-a representation of the input); and
-since for every lookup table, there's an equivalent implementation with logic gates (and vice versa), we can implement
-the whole function without conditional logic. That means no branches, no tests, and no comparisons.
+to determine what to output for that number ("Fizz", "Buzz", "FizzBuzz", or the ~itoa~ representation of the input); and
+it follows from /that/ that, since there's an equivalent implementation with logic gates for every lookup table (and
+vice versa), we can implement the *whole function* without conditional logic. No branches, no tests, and no
+comparisons. We don't need 'em!
 
-I wanted to give that a try.
-
------
-
-To be more specific, we're not going to do any of the following in our implementation logic:
+I thought it'd be fun to give that a try.
+* Implementation
+** The Rules
+To be more specific than just "no conditional logic", let's define a rule set for ourselves. We're not going to do any
+of the following in our implementation:
 
 - ~jcc~ (or family),
 - ~jmp~ (or family),
 - ~rep~ (or family),
 - ~call~ (or family),
 - ~syscall~, ~int~, or any other kind of trap (conditional or otherwise),
-- or anything else that mutates ~rip~ in any ways besides advancing it to the next instruction;
-- ~mov~ any data from memory to anywhere else;
-- perform an indirection of any form other than ~[rdi] + disp64~ (implicit or otherwise; that means ~push~ and ~movs~
+- anything /else/ that mutates ~rip~ in any way, besides advancing it to the next instruction;
+- ~mov~​es from memory to anywhere else;
+- perform indirections of any form other than ~[rdi] + disp64~ (implicit or otherwise -- that means ~push~ and ~movs~
   and so forth),
-- /or/ mutate ~rdi~ at any point, for any reason.
+- mutate ~rdi~ at any point, for any reason
 
-That means we're gonna need something less pure to do stuff like I/O for us. We'll get to that.
-* Implementation
-** Overview
-This project is split into two source files: an impure driver written in C, which implements the outer loop and printing
-logic; and a comparison-less function written in x64 assembly (to avoid the compiler doing anything against the rules
-behind our backs), which implements the following pseudocode logic:
+Because I/O is always gonna involve breaking at least /one/ of these rules, we need an "impure" piece of driver code to
+interface with our FizzBuzz function and print the results.
+** Project Structure
+This project is split into two source files. The driver is written in C, and implements the outer loop and printing
+logic; and our FizzBuzz function is written in x64 assembly, to avoid the compiler doing anything against the rules
+behind our backs, and implements the following pseudocode logic:
 
 #+begin_example
 if n % 3 == 0 && n % 5 != 0:
@@ -94,10 +94,11 @@ and then we just allocate a character buffer for our assembly function, call it 
 #+end_src
 ** ~bfb_fill_buffer~
 Implementing ~bfb_fill_buffer~ is, of course, significantly more involved.
+*** Parameters
+First, let's define our parameters. As you can see from the driver code, we need two things: a buffer to write to, and
+the iteration number to process. Both are 64-bit; the former a pointer, the latter simply an unsigned integer.
 
-First, let's define our parameters. As you can see, we need two things from the driver: a buffer to write to, and the
-iteration number to process. Both are 64-bit; the former a pointer, the latter simply an unsigned integer. Let's define
-that in our header file:
+Let's define that in our header file:
 
 #+begin_src c :tangle src/branchless_fizzbuzz.h :exports "none"
   // include guard, elided from html
@@ -110,18 +111,19 @@ that in our header file:
 
   void bfb_fill_buffer(char*, uint64_t);
 #+end_src
+*** Buffer Size
+Second, let's hardcode the size of the output buffer. (Without conditional logic, we have no means to terminate loops --
+everything is gonna have to be unrolled.)
 
-We also need to hardcode the size of the buffer, as without conditional logic we have no means to terminate loops --
-everything is gonna have to be unrolled. This is constrained by our implementation logic; essentially, we want to be
-able to fit the itoa representation ~UINT_64_MAX~ into the right side of the buffer, and ~strlen("FizzBuzz") + 1 = 9~
-characters into the left. This allows us to write the strings ~"Fizz\0"~, ~"Buzz\0"~, ~"FizzBuzz\0"~, or ~"000000000"~
-to the head of the buffer and get correct output (with no trailing garbage) after the former three cases, and ugly but
-technically valid 0-padded results for the latter.
+The minimum size is constrained to $\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10} (2^{64} - 1) \rceil + 1 = 30$
+bytes, as we want to be able to fit the ~itoa~ representation of ~UINT_64_MAX~ into the right side of the buffer and
+~strlen("FizzBuzz") + 1 = 9~ characters into the left.
 
-In other words, the minimum size of our buffers is $\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10} (2^{64} - 1)
-\rceil + 1 = 30$ bytes.
+This will allow us to write the strings ~"Fizz\0"~, ~"Buzz\0"~, ~"FizzBuzz\0"~, or ~"000000000"~ to the head of the
+buffer and get correct output (with no trailing garbage) for the former three cases, and ugly but technically valid
+0-padded results for the latter.
 
-Let's encode that into our header, and our assembly:
+Let's encode this into our header file and into our assembly source:
 
 #+begin_src c :tangle src/branchless_fizzbuzz.h
   #define MIN_BUFFER_SIZE 30
@@ -140,14 +142,14 @@ Let's encode that into our header, and our assembly:
   section .text                   ; start of text section, elided from html
 #+end_src
 
-With that out of the way, let's define our assembly function. Here's our header:
+With that out of the way, let's actually start writing our assembly function. Here's our header:
 
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
   global bfb_fill_buffer
   bfb_fill_buffer:
 #+end_src
 
-The following registers are going to be used by this function:
+and here's the registers we're gonna use:
 
 | Name  | Purpose                                                                       |
 |-------+-------------------------------------------------------------------------------|
