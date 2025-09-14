@@ -1,13 +1,46 @@
-* Introduction
-This is a solution to the classic 'FizzBuzz' interview question, which adheres to the following unusual set of
-constraints:
+* Org and GitHub                                                   :noexport:
+This README you're looking at right now is an [[https://orgmode.org/][org]] document. GitHub have parsed it into their custom extended markdown
+format for your convenience, and they haven't done it very well.
 
-- No branches
-- No jumps
-- No calls (except to the function itself)
-- No ~mov~ instructions where the source is a location in memory
-- No indirection not of the form ~[rdi] + disp64~
-- No mutating ~rdi~
+If you want working links to headings, footnotes, centered text, proper line wrapping in code markup and so forth; you
+should clone this repo and check out [[./branchless_fizzbuzz.html]], or open this file with [[https://www.gnu.org/software/emacs/download.html][GNU Emacs]].
+* Introduction
+** Rationale
+Okay, so a couple years back I was reading this great blog post titled "Euler's Fizzbuzz" (which you can find here:
+http://philcrissman.net/posts/eulers-fizzbuzz/, read it!), which describes a really interesting technique for
+differentiating numbers by their prime factors with only simple integer arithmetic. One line of that post in particular,
+right at the start, has stuck in my mind for over a year since I fist read it:
+
+#+begin_quote
+It is possible to write a function which uses no conditional logic at all, but which uses math to separate integers into
+4 possible categories:
+
+1. Those which have 3 as a factor, but not 5
+2. Those which have 5 as a factor, but not 3
+3. Those which have both 3 and 5 as a factor
+4. Those which have neither 3 nor 5 as factors
+#+end_quote
+
+It's that "no conditional logic" bit that caught my attention. If we can differentiate numbers based on their prime
+factors, we can use a lookup table to determine what to output for that number ('Fizz', 'Buzz', 'FizzBuzz', or the
+i-to-a representation of the input); and since for every lookup table, there's an equivalent implementation with logic
+gates (and vice versa), we can implement the whole function without conditional logic. That means no branches, no tests,
+and no comparisons. I wanted to give that a try.
+
+-----
+
+To be more specific, we're not going to do any of the following in our implementation logic:
+
+- branch,
+- jump,
+- call,
+- syscall,
+- or otherwise modify the state of  ~rip~ in any way besides advancing it to the next instruction;
+- ~mov~ any data from memory to anywhere else;
+- perform an indirection of any form other than ~[rdi] + disp64~,
+- or mutate ~rdi~.
+
+That means we need someone else (less pure) to do stuff like I/O for us. I've implemented
 * Hardcoded Data Structure Sizes
 First, before we do anything else, we need to pick a size to hard-code for our output buffer.
 
