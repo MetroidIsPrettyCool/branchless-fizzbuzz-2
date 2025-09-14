@@ -2,8 +2,9 @@
 This README you're looking at right now is an [[https://orgmode.org/][org]] document. GitHub have parsed it into their custom extended markdown
 format for your convenience, and they haven't done it very well.
 
-If you want working links to headings, footnotes, centered text, proper line wrapping in code markup and so forth; you
-should clone this repo and check out [[./branchless_fizzbuzz.html]], or open this file with [[https://www.gnu.org/software/emacs/download.html][GNU Emacs]].
+Please clone this repo and take a look at [[./branchless_fizzbuzz.html]] instead; or open this file with [[https://www.gnu.org/software/emacs/download.html][GNU Emacs]] if you
+don't mind seeing some of the guts. (Blocks marked for noexport, formatting configuration, other stuff that makes the
+HTML more legible and this less.)
 * Introduction
 ** Rationale
 Okay, so a couple years back I was reading this great blog post titled "Euler's Fizzbuzz" (which you can find here:
@@ -21,140 +22,208 @@ It is possible to write a function which uses no conditional logic at all, but w
 4. Those which have neither 3 nor 5 as factors
 #+end_quote
 
-It's that "no conditional logic" bit that caught my attention. If we can differentiate numbers based on their prime
-factors, we can use a lookup table to determine what to output for that number ('Fizz', 'Buzz', 'FizzBuzz', or the
-i-to-a representation of the input); and since for every lookup table, there's an equivalent implementation with logic
-gates (and vice versa), we can implement the whole function without conditional logic. That means no branches, no tests,
-and no comparisons. I wanted to give that a try.
+"No conditional logic", huh?
+
+Well, it follows from that, that if we can differentiate numbers based on their prime factors, we can use a lookup table
+to determine what to output for that number ('Fizz', 'Buzz', 'FizzBuzz', or the i-to-a representation of the input); and
+since for every lookup table, there's an equivalent implementation with logic gates (and vice versa), we can implement
+the whole function without conditional logic. That means no branches, no tests, and no comparisons.
+
+I wanted to give that a try.
 
 -----
 
 To be more specific, we're not going to do any of the following in our implementation logic:
 
-- branch,
-- jump,
-- call,
-- syscall,
-- or otherwise modify the state of  ~rip~ in any way besides advancing it to the next instruction;
+- ~jcc~ (or family),
+- ~jmp~ (or family),
+- ~rep~ (or family),
+- ~call~ (or family),
+- ~syscall~, ~int~, or any other kind of trap (conditional or otherwise),
+- or anything else that mutates ~rip~ in any ways besides advancing it to the next instruction;
 - ~mov~ any data from memory to anywhere else;
-- perform an indirection of any form other than ~[rdi] + disp64~,
-- or mutate ~rdi~.
+- perform an indirection of any form other than ~[rdi] + disp64~ (implicit or otherwise; that means ~push~ and ~movs~
+  and so forth),
+- /or/ mutate ~rdi~ at any point, for any reason.
 
-That means we need someone else (less pure) to do stuff like I/O for us. I've implemented
-* Hardcoded Data Structure Sizes
-First, before we do anything else, we need to pick a size to hard-code for our output buffer.
+That means we're gonna need something less pure to do stuff like I/O for us. We'll get to that.
+* Implementation
+** Overview
+This project is split into two source files: an impure driver written in C, which implements the outer loop and printing
+logic; and a comparison-less function written in x64 assembly (to avoid the compiler doing anything against the rules
+behind our backs), which implements the following pseudocode logic:
 
-At present, this is constrained such that it should be at least $\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10}
-(2^{64} - 1) \rceil + 1 = 30$ bytes big, if we want to support all unsigned 64-bit integers.
+#+begin_example
+if n % 3 == 0 && n % 5 != 0:
+  return "Fizz"
+if n % 3 != 0 && n % 5 == 0:
+  return "Buzz"
+if n % 3 == 0 && n % 5 == 0:
+  return "FizzBuzz"
+if n % 3 != 0 && n % 5 != 0:
+  return itoa(n)
+#+end_example
+** The Driver
+The implementation of the driver is pretty simple. We import some standard headers:
+
+#+begin_src c :tangle src/driver.c
+  #include <stdio.h>
+  #include <stdlib.h>
+
+  #include <stdint.h>
+#+end_src
+
+and then our project-specific header (which we'll cover in a sec.), to link against the assembly source:
+
+#+begin_src  c :tangle src/driver.c
+    #include "branchless_fizzbuzz.h"
+#+end_src
+
+and then we just allocate a character buffer for our assembly function, call it in a loop, and print each result:
+
+#+begin_src c :tangle src/driver.c
+  int main(int argc, char* argv[]) {
+      char buffer[MIN_BUFFER_SIZE] = {0};
+
+      for (uint64_t i = 1; i != 1000; i++) {
+          bfb_fill_buffer(buffer, i);
+
+          puts(buffer);
+      }
+  }
+#+end_src
+** ~bfb_fill_buffer~
+Implementing ~bfb_fill_buffer~ is, of course, significantly more involved.
+
+First, let's define our parameters. As you can see, we need two things from the driver: a buffer to write to, and the
+iteration number to process. Both are 64-bit; the former a pointer, the latter simply an unsigned integer. Let's define
+that in our header file:
+
+#+begin_src c :tangle src/branchless_fizzbuzz.h :exports "none"
+  // include guard, elided from html
+  #ifndef BRANCHLESS_FIZZBUZZ_H
+  #define BRANCHLESS_FIZZBUZZ_H
+#+end_src
+
+#+begin_src c :tangle src/branchless_fizzbuzz.h
+  #include <stdint.h>   // ensure uint64_t is defined
+
+  void bfb_fill_buffer(char*, uint64_t);
+#+end_src
+
+We also need to hardcode the size of the buffer, as without conditional logic we have no means to terminate loops --
+everything is gonna have to be unrolled. This is constrained by our implementation logic; essentially, we want to be
+able to fit the itoa representation ~UINT_64_MAX~ into the right side of the buffer, and ~strlen("FizzBuzz") + 1 = 9~
+characters into the left. This allows us to write the strings ~"Fizz\0"~, ~"Buzz\0"~, ~"FizzBuzz\0"~, or ~"000000000"~
+to the head of the buffer and get correct output (with no trailing garbage) after the former three cases, and ugly but
+technically valid 0-padded results for the latter.
+
+In other words, the minimum size of our buffers is $\text{len}(\text{“FizzBuzz\\0”}) + \lceil \log_{10} (2^{64} - 1)
+\rceil + 1 = 30$ bytes.
+
+Let's encode that into our header, and our assembly:
+
+#+begin_src c :tangle src/branchless_fizzbuzz.h
+  #define MIN_BUFFER_SIZE 30
+#+end_src
+
+#+begin_src c :tangle src/branchless_fizzbuzz.h :exports "none"
+  // end include guard, elided from html
+  #endif
+#+end_src
 
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
   %assign BUFF_SIZE 30
 #+end_src
-* ~bfb_fill_buffer~
-Okay, now we define our text section and function label headers:
+*** Setup
+#+begin_src nasm :tangle src/branchless_fizzbuzz.s :exports "none"
+  section .text                   ; start of text section, elided from html
+#+end_src
+
+With that out of the way, let's define our assembly function. Here's our header:
 
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
-  section .text
-
   global bfb_fill_buffer
   bfb_fill_buffer:
 #+end_src
 
-This is a function that takes two arguments: a buffer to write the result to (must be at least ~30~ characters big), and
-the number to process. It returns nothing.
+The following registers are going to be used by this function:
 
-Let's define that in a header file:
-
-#+begin_src c :tangle src/branchless_fizzbuzz.h
-  #ifndef BRANCHLESS_FIZZBUZZ_H
-  #define BRANCHLESS_FIZZBUZZ_H
-
-  // #include <stddef.h>   // ensure size_t is defined
-  #include <stdint.h>   // ensure uint64_t is defined
-
-  #define MIN_BUFFER_SIZE 30
-
-  void bfb_fill_buffer(char*, uint64_t);
-
-  #endif
-#+end_src
-
-Let's start implementing our logic:
-
-The following registers are used by this program:
-
-| Name  | Purpose                                                                                    |
-|-------+--------------------------------------------------------------------------------------------|
-| ~rdi~ | Contains the 1st argument (output buffer) on entry, used as the "write" pointer for output |
-|-------+--------------------------------------------------------------------------------------------|
-| ~rsi~ | Contains the 2nd argument (the number to process) on entry, held that way                  |
-|-------+--------------------------------------------------------------------------------------------|
-| ~rax~ | Miscellaneous                                                                              |
-|-------+--------------------------------------------------------------------------------------------|
-| ~rcx~ | Miscellaneous                                                                              |
-|-------+--------------------------------------------------------------------------------------------|
-| ~rdx~ | Miscellaneous                                                                              |
-|-------+--------------------------------------------------------------------------------------------|
-| ~r8~  | Miscellaneous                                                                              |
-|-------+--------------------------------------------------------------------------------------------|
-| ~r11~ | Miscellaneous                                                                              |
+| Name  | Purpose                                                                       |
+|-------+-------------------------------------------------------------------------------|
+| ~rdi~ | Contains the 1st argument (pointer to output buffer) on entry, held invariant |
+|-------+-------------------------------------------------------------------------------|
+| ~rsi~ | Contains the 2nd argument (the number to process) on entry, held invariant    |
+|-------+-------------------------------------------------------------------------------|
+| ~rax~ | Miscellaneous                                                                 |
+|-------+-------------------------------------------------------------------------------|
+| ~rcx~ | Miscellaneous                                                                 |
+|-------+-------------------------------------------------------------------------------|
+| ~rdx~ | Miscellaneous                                                                 |
+|-------+-------------------------------------------------------------------------------|
+| ~r8~  | Miscellaneous                                                                 |
+|-------+-------------------------------------------------------------------------------|
+| ~r11~ | Miscellaneous                                                                 |
 
 #+begin_center
-The x64 ABI states that callees must preserve the values of ~rbx~, ~rsp~, ~rbp~, and ~r12~-~15~, as well as some
-floating-point registers. We use none of them.
+(The x64 System V ABI defines all of these as caller-saved registers, which is good, because it's against our rules to
+use the stack.)
 #+end_center
+*** i to a
+The first bit of logic we need to implement is to perform an integer-to-string conversion on ~rsi~, writing the result
+to the rightmost portion of our output buffer.
 
-First, we need to perform an integer-to-string conversion on ~rsi~. The following is a naive implementation which
-prefixes the result with 00000s to fill the buffer:
+We can simply use the classic "modulus by ten, divide by ten, advance backwards" algorithm to do so, with a macro loop
+that unrolls at assemble-time:
 
 #+begin_center
-Registers:
+Registers used:
 
 #+ATTR_HTML: :align center
 | Name  | Purpose                                              |
 |-------+------------------------------------------------------|
-| ~rdi~ | Immutable write-to-output-buffer pointer             |
+| ~rdi~ | Write-to-output-buffer pointer, held invariant       |
 |-------+------------------------------------------------------|
 | ~rax~ | Quotient of each division step                       |
 |-------+------------------------------------------------------|
 | ~rcx~ | Set to the constant '10' for base 10 and not changed |
 |-------+------------------------------------------------------|
 | ~rdx~ | Remainder of each division                           |
-
 #+end_center
 
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
   ;; initial setup
-          mov rax, rsi            ; move our number into the bottom half of the same
-          mov rcx, 10             ; our base
+          mov rax, rsi            ; move our number into the bottom half of the rdx:rax register pair
+          mov rcx, 10             ; we're doing a base 10 itoa
   ;; repeat for every digit
   %assign i BUFF_SIZE - 2
-  %rep BUFF_SIZE - 8 - 1 - 1
+  %rep BUFF_SIZE - 8 - 1 - 1      ; the size of the buffer, minus strlen("FizzBuzz\0"), minus the final NULL terminator
           xor rdx, rdx            ; zero the top half of rdx:rax
           div rcx                 ; rax now contains the quotient, and rdx the remainder
           add rdx, '0'
-          mov byte [rdi + i], dl
+          mov byte [rdi + i], dl  ; write to the buffer
   %assign i i-1
   %endrep
   ;; cleanup
           mov byte [rdi + BUFF_SIZE - 1], 0 ; null-terminate the buffer
 #+end_src
-
-Next, we need to use [[http://philcrissman.net/posts/eulers-fizzbuzz/][this]] algorithm to differentiate whether ~3~, ~5~, both, or /neither/ are factors of ~rsi~:
+*** Euler's FizzBuzz
+Next, we'll use the "Euler's FizzBuzz" algorithm ($n^4 \text{ mod } 15$) to determine whether 3 and/or 5 are prime
+factors of ~rsi~:
 
 #+begin_center
-Registers:
+Registers used:
 
 #+ATTR_HTML: :align center
-| Name  | Purpose                           |
-|-------+-----------------------------------|
-| ~rsi~ | Current FizzBuzz iteration number |
-|-------+-----------------------------------|
-| ~rax~ | Quotient of each division step    |
-|-------+-----------------------------------|
-| ~rdx~ | Result of the procedure           |
-|-------+-----------------------------------|
-| ~rcx~ | Magic modulus constant            |
+| Name  | Purpose                                                           |
+|-------+-------------------------------------------------------------------|
+| ~rsi~ | Current FizzBuzz iteration number                                 |
+|-------+-------------------------------------------------------------------|
+| ~rax~ | Quotient of each division step                                    |
+|-------+-------------------------------------------------------------------|
+| ~rdx~ | Result of the procedure                                           |
+|-------+-------------------------------------------------------------------|
+| ~rcx~ | Magic modulus constant, re-used as a copy of the procedure result |
 
 #+end_center
 
@@ -166,13 +235,14 @@ Registers:
           mul rsi                 ; rdx:rax = rsi^4
           mov rcx, 15
           div rcx                 ; final remainder is now in rdx
+          mov rcx, rdx            ; copy that result into rcx for safekeeping
 #+end_src
 
 #+begin_center
 (We ~mul~ with ~rsi~ three times, instead of ~mul rax~ two times, because the latter will work for all 64-bit integers.)
 #+end_center
 
-Now the ~rdx~ register will contain one of four possible values:
+The result of this procedure leaves the ~rdx~ register containing one of four possible values:
 
 | dec  | bin        | IFF...                                           |
 | <l>  | <l>        | <l>                                              |
@@ -185,50 +255,101 @@ Now the ~rdx~ register will contain one of four possible values:
 
 We'll use this to write the "head" of the buffer as follows:
 
-| ~dl~ | byte 0 | 1     | 2     | 3     | 4      | 5     | 6     | 7       | 8      |
-|    / | <      |       |       |       |        |       |       |         | >      |
-|------+--------+-------+-------+-------+--------+-------+-------+---------+--------|
-|    0 | ~'F'~  | ~'i'~ | ~'z'~ | ~'z'~ | ~'B'~  | ~'u'~ | ~'z'~ | ~'z'~   | ~NULL~ |
-|    1 | ~'0'~  | ~'0'~ | ~'0'~ | ~'0'~ | ~'0'~  | ~'0'~ | ~'0'~ | ~'0'~   | ~'0'~  |
-|    6 | ~'F'~  | ~'i'~ | ~'z'~ | ~'z'~ | ~NULL~ | what  | ever  | doesn't | matter |
-|   10 | ~'B'~  | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ | what  | ever  | doesn't | matter |
+| ~dl~ | byte |   0   |   1   |   2   |   3   |   4    |   5   |   6   |   7   | 8      |
+|    / | <    |       |       |       |       |        |       |       |       | >      |
+|      |      |  <c>  |  <c>  |  <c>  |  <c>  |  <c>   |  <c>  |  <c>  |  <c>  | <c>    |
+|------+------+-------+-------+-------+-------+--------+-------+-------+-------+--------|
+|    0 |      | ~'F'~ | ~'i'~ | ~'z'~ | ~'z'~ | ~'B'~  | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ |
+|    1 |      | ~'0'~ | ~'0'~ | ~'0'~ | ~'0'~ | ~'0'~  | ~'0'~ | ~'0'~ | ~'0'~ | ~'0'~  |
+|    6 |      | ~'F'~ | ~'i'~ | ~'z'~ | ~'z'~ | ~NULL~ |   ?   |   ?   |   ?   | ?      |
+|   10 |      | ~'B'~ | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ |   ?   |   ?   |   ?   | ?      |
+
+Where '?' indicates we don't care what gets written.
 
 #+begin_center
-(For reference, here's the binary values for each of those ASCII codepoints:)
+(For reference, here's the binary values for each of those ASCII/UTF-8 codepoints)
 
 #+ATTR_HTML: :align center
-| /      | >          |       | >          |
-| ~NULL~ | ~00000000~ | ~'0'~ | ~00110000~ |
-| ~'B'~  | ~01000010~ | ~'F'~ | ~01000110~ |
-| ~'i'~  | ~01101001~ | ~'u'~ | ~01110101~ |
-| ~'z'~  | ~01111010~ |       |            |
+| ~NULL~     | ~'0'~      | ~'B'~      | ~'F'~      | ~'i'~      | ~'u'~      | ~'z'~      |
+|------------+------------+------------+------------+------------+------------+------------|
+| ~00000000~ | ~00110000~ | ~01000010~ | ~01000110~ | ~01101001~ | ~01110101~ | ~01111010~ |
 
 #+end_center
+*** Logic Strategies
+Now that we know the factors of ~rsi~, we can use that information to compose output bytes for each of the
+aforementioned positions.
 
-But before we do any of that, we'll copy the value in ~rdx~ to ~rcx~ for safekeeping.
+In general, we can do this by creating "conditional masks". Essentially, we find a way to set a register to either ~01h~
+or ~00h~ if some condition is false or true (*not* true or false), respectively, and then decrement that register. This
+leaves the register with the value ~FFFFFFFFFFFFFFFFh~ if the condition was true, and ~0000000000000000h~ if the
+condition was false. This register can now be used as a /mask/ for other registers -- ~and~​ing with it leaves the
+destination unchanged if the initial condition was true, and zeroes it if it was false.
 
-#+begin_src nasm :tangle src/branchless_fizzbuzz.s
-          mov rcx, rdx
-#+end_src
+In cases where there are only two possible options for what we'll want to write at a given byte offset (e.g. byte 2, or
+byte 8), we can use the following pseudocode procedure to set a register based on a condition:
 
-Alright, let's get started.
+#+begin_example
+let is_a_or_b = 0 or 1, depending
+mask = is_a_or_b - 1
 
-For bytes 2, 3, 6, 7, and 8; we only need to discriminate depending on if ~rdx~ is equal to ~1~, writing a ~'0'~ if so,
-and a ~'z'~ if not.
+let result = A & mask
+mask = not mask, toggling it
+mask &= B
+result |= mask
+#+end_example
+
+which clobbers ~mask~ and sets ~result~ to ~A~ if ~is_a_or_b~ was ~0~, or ~B~ if it was ~1~.
+
+In cases where there are three possible values for what we'll want to write at a given byte offset (e.g. byte 0 or byte
+1), we can extend this procedure to compose our result by means of integer addition and /two/ masks; one that's ~0~ or
+~1~ if it's option 1 or option 2 (and whatever if it's option 3), and another that's ~1~ if it's option C and ~0~
+otherwise (*note that that's reversed!*).
+
+In pseudocode:
+
+#+begin_example
+let is_a_or_b = 0 or 1, depending (value doesn't matter if it's c)
+mask = is_a_or_b - 1
+
+let result = (the difference between A and C) & mask
+mask = not mask, toggling it
+mask &= (the difference between B and C)
+result |= mask
+
+let is_not_c_or_c = 0 or 1, depending
+let new_mask = is_not_c_or_c - 1
+
+result &= new_mask, zeroing it if it was option c
+result += C
+#+end_example
+
+which clobbers ~mask~ and ~new_mask~ (may or may not be the same register, depending on where our results start
+appearing in our implemented procedure) and sets ~result~ to ~A~ if ~is_a_or_b~ was ~0~ and ~is_not_c_or_c~ was ~0~, to
+~B~ if ~is_a_or_b~ was ~0~ and ~is_not_c_or_c~ was ~0~, or to ~C~ if ~is_not_c_or_c~ was ~1~.
+
+With only some slight modifications for conciseness (we don't want to recalculate anything we don't have to, do we?),
+these two procedures form the majority of the following code. The rest is discrimination logic (actually setting
+~is_a_or_b~ depending on some factor), actually writing bytes to the output buffer, and some funny instruction
+count-optimizations based on the "bits set (as in 1) or unset (as in 0)" set (as in the collection in math) relationship
+between different characters.
+*** "Coprime to Both or Not"-Specific Bytes
+For bytes 2, 3, 6, 7, and 8; we only need to discriminate depending on if ~rdx~ is equal to ~1~, writing a ~'0'~ if so;
+and either a ~'z'~ (bytes 2, 3, 6 and 7) or ~NULL~ (byte 8) if not, so we can use the simple two-option procedure (with
+some slight modification, because we're setting two different result registers).
 
 #+begin_center
-Registers:
+Registers used:
 
 #+ATTR_HTML: :align center
 | Name  | Purpose                                                   |
 |-------+-----------------------------------------------------------|
-| ~rdi~ | Immutable write-to-output-buffer pointer                  |
+| ~rdi~ | Write-to-output-buffer pointer, held invariant            |
 |-------+-----------------------------------------------------------|
 | ~rcx~ | Immutable copy of the "Euler's FizzBuzz" procedure result |
 |-------+-----------------------------------------------------------|
-| ~rdx~ | Value to write to bytes 2, 3, 6 and 7                     |
+| ~rdx~ | Value to write to buffer offsets 2, 3, 6 and 7            |
 |-------+-----------------------------------------------------------|
-| ~rax~ | Value to write to byte 8                                  |
+| ~rax~ | Value to write to buffer offset 8                         |
 
 #+end_center
 
@@ -257,27 +378,27 @@ Registers:
           mov byte [rdi + 7], dl
           mov byte [rdi + 8], al
 #+end_src
+*** Byte 4
+For byte 4, the only byte where we need to distinguish based on the intended output's /length,/ we can use bit position
+1 in ~rdx~ to distinguish ~6~ and ~10~ from ~0~ and ~1~ (it's set in the former and unset in the latter), and bit
+position 0 (only set in the former, obviously) to distinguish ~1~ from ~0~.
 
-For byte 4, we can use bit position 1 in ~rdx~ to distinguish ~6~ and ~10~ from ~0~ and ~1~ (it's set in the former and
-unset in the latter), and ~1~ from ~0~ with bit position 0 (only set in the former, obviously).
-
-Once again, we are conveniently aided by the fact that 'B' and '0' are disjoint. We can simply compose the result byte
-from a single conditional mask, toggling it between applications, and then if it's actually supposed to be NULL, we just
-zero the byte with another conditional mask. (Regardless of whatever garbage may have been created.)
+We are conveniently aided by the facts that, in terms of set bits, ~'B'~ and ~'0'~ are disjoint; and that ~NULL~ is
+zeroed. This enables us to use a simplified form of the three-option procedure.
 
 #+begin_center
 Registers:
 
 #+ATTR_HTML: :align center
-| Name  | Purpose                                                   |
-|-------+-----------------------------------------------------------|
-| ~rdi~ | Immutable write-to-output-buffer pointer                  |
-|-------+-----------------------------------------------------------|
-| ~rcx~ | Immutable copy of the "Euler's FizzBuzz" procedure result |
-|-------+-----------------------------------------------------------|
-| ~rdx~ | Scratch register, used to compose conditional masks       |
-|-------+-----------------------------------------------------------|
-| ~rax~ | Value to write to byte 4                                  |
+| Name  | Purpose                                                         |
+|-------+-----------------------------------------------------------------|
+| ~rdi~ | Write-to-output-buffer pointer, held invariant                  |
+|-------+-----------------------------------------------------------------|
+| ~rcx~ | Copy of the "Euler's FizzBuzz" procedure result, held invariant |
+|-------+-----------------------------------------------------------------|
+| ~rdx~ | Scratch register, used to compose conditional masks             |
+|-------+-----------------------------------------------------------------|
+| ~rax~ | Value to write to buffer offset 4                               |
 
 #+end_center
 
@@ -300,10 +421,12 @@ Registers:
           mov byte [rdi + 4], al
 
 #+end_src
+*** "Fizz vs Buzz vs ~itoa~"
+Finally, for bytes 0, 1 and 5, we need to discriminate based on whether ~rdx~ is equal to ~1~, or if it's equal to ~10~,
+or if it's equal to ~0~ or ~6~.
 
-Finally, for bytes 0, 1 and 5, we need to discriminate based on whether ~rdx~ is equal to ~1~, ~10~, or if it's equal to
-~0~ or ~6~. To distinguish ~0~ and ~6~ from ~1~ and ~10~, we can decrement ~rdx~ and check if bit 2 is ~1~. If it is,
-it's ~0~ or ~6~.
+To distinguish ~0~ and ~6~ from ~1~ and ~10~, we can decrement ~rdx~ and check if bit 2 is ~1~. If it is, it's ~0~ or
+~6~.
 
 | ~dl~       | ~dl - 1~   |
 |------------+------------|
@@ -319,8 +442,9 @@ From these two bit positions, we can calculate the proper character value. Conve
 setting the very same bit position, and the bits of ~'0'~ are mutually exclusive with those of either. /Unfortunately,/
 'i' and 'u' are overlapping non-subsets. 'u' /is/ a superset of '0', though.
 
-This logic is pretty involved; fortunately, since these are the last bytes and we don't need to restore ~rdx~ anymore,
-we can afford to clobber ~rcx~ for another non-REX scratch register.
+This logic is pretty involved, since we have three completely different results to compose and three possible options;
+fortunately, since these are the last bytes and we don't need to restore ~rdx~ anymore, we can afford to clobber ~rcx~
+for another non-REX scratch register.
 
 #+begin_center
 Registers:
@@ -328,18 +452,18 @@ Registers:
 #+ATTR_HTML: :align center
 | Name  | Purpose                                                      |
 |-------+--------------------------------------------------------------|
-| ~rdi~ | Immutable write-to-output-buffer pointer                     |
+| ~rdi~ | Write-to-output-buffer pointer, held invariant               |
 |-------+--------------------------------------------------------------|
 | ~rcx~ | Copy of the "Euler's FizzBuzz" procedure result,             |
 |       | later re-used as the bit-unset mask for both-coprime results |
 |-------+--------------------------------------------------------------|
 | ~rdx~ | Scratch, used to compose conditional masks                   |
 |-------+--------------------------------------------------------------|
-| ~rax~ | Value to write to byte 0                                     |
+| ~rax~ | Value to write to buffer offset 0                            |
 |-------+--------------------------------------------------------------|
-| ~r8~  | Value to write to byte 1                                     |
+| ~r8~  | Value to write to buffer offset 1                            |
 |-------+--------------------------------------------------------------|
-| ~r11~ | Value to write to byte 5                                     |
+| ~r11~ | Value to write to buffer offset 5                            |
 
 #+end_center
 
@@ -396,26 +520,19 @@ And with that, we're all done!
 #+begin_src nasm :tangle src/branchless_fizzbuzz.s
           ret
 #+end_src
-* The Driver
-Since this function implementation has no I/O or entry point, we need a small "driver" program to interface with it and
-print the results. Here's a simple one:
+* Building
+This project requires make, YASM, gcc, and mkdir for building, and targets only systems which use the System V ABI.
 
-#+begin_src c :tangle src/driver.c
-  #include <stdint.h>
-  #include <stdio.h>
-  #include <stdlib.h>
+To build, just clone the repo, navigate to the root directory, and run ~make~. The binary will be located at
+~build/branchless_fizzbuzz~.
 
-  #include "branchless_fizzbuzz.h"
-
-  int main(int argc, char* argv[]) {
-      char buffer[MIN_BUFFER_SIZE] = {0};
-
-      // could be unrolled and moved into the assembly (thereby eliminating a source of branches) if we're willing to hard
-      // code the loop bound, but for the sake of the binary's size we're not gonna do that.
-      for (uint64_t i = 1; i != 1000; i++) {
-          bfb_fill_buffer(buffer, i);
-
-          puts(buffer);
-      }
-  }
-#+end_src
+To remove all build products from the build directory, run ~make clean~. To remove all build products /and/ the binary
+from the build directory, run ~make pristine~.
+* Potential Further Improvements
+1. Correct the logic which leads to a FPE with sufficently large values of ~i~ (​~rsi~​)
+2. Have the assembly portion return a pointer the beginning of the string, instead of just /assuming/ it's the same as
+   the start of the buffer. Would allow us to elide all those leading 0s.
+3. Replace the loop in the C driver with a ~%rep~ loop in the assembly portion of the project. If taken with #1, would
+   probably involve passing a pair of buffers: one to write data to, and another to write pointers to the starts of each
+   string. First buffer should probably be 32-byte aligned.
+4. Get better at assembly and find better and arcane-er ways to implement everything.
