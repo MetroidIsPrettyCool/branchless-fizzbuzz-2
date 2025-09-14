@@ -257,7 +257,7 @@ The result of this procedure leaves the ~rdx~ register containing one of four po
 | ~0~  | ~00000000~ | ...​~rsi~ is divisible by ~3~ and ~5~            |
 | ~1~  | ~00000001~ | ...​~rsi~ is coprime to ~3~ and ~5~              |
 | ~6~  | ~00000110~ | ...​~rsi~ is divisible by ~3~ and coprime to ~5~ |
-| ~10~ | ~00001010~ | ...​~rsi~ is coprime to ~~3 and divisible by ~5~ |
+| ~10~ | ~00001010~ | ...​~rsi~ is coprime to ~3~ and divisible by ~5~ |
 
 We'll use this to write the "head" of the buffer as follows:
 
