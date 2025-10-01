@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-09-14 Sun 00:52 -->
+<!-- 2025-09-30 Tue 19:35 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>&lrm;</title>
+<title>No-Conditional Logic FizzBuzz in C + x64 assembly</title>
 <meta name="generator" content="Org Mode" />
 <style type="text/css">
   #content { max-width: 60em; margin: auto; }
@@ -192,6 +192,7 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { }
 </style>
+<style> pre.src { background-color: black; color: white; }</style>
 <script>
   window.MathJax = {
     tex: {
@@ -227,41 +228,42 @@
 </head>
 <body>
 <div id="content" class="content">
+<h1 class="title">No-Conditional Logic FizzBuzz in C + x64 assembly</h1>
 <div id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orge42a358">1. Introduction</a></li>
-<li><a href="#orgf33f588">2. Implementation</a>
+<li><a href="#org6f1ea2e">1. Introduction</a></li>
+<li><a href="#org242c77a">2. Implementation</a>
 <ul>
-<li><a href="#orgdfa59ca">2.1. The Rules</a></li>
-<li><a href="#orgaf851a1">2.2. Project Structure</a></li>
-<li><a href="#orgbc2e7d2">2.3. The Driver</a></li>
-<li><a href="#org6a82123">2.4. <code>bfb_fill_buffer</code></a>
+<li><a href="#org000bae7">2.1. The Rules</a></li>
+<li><a href="#org2227e6f">2.2. Project Structure</a></li>
+<li><a href="#org5977549">2.3. The Driver</a></li>
+<li><a href="#org09e7165">2.4. <code>bfb_fill_buffer</code></a>
 <ul>
-<li><a href="#org8699771">2.4.1. Parameters</a></li>
-<li><a href="#orgf169ea6">2.4.2. Buffer Size</a></li>
-<li><a href="#orgc8f2af2">2.4.3. Setup</a></li>
-<li><a href="#org817322b">2.4.4. i to a</a></li>
-<li><a href="#org61b638e">2.4.5. Euler&rsquo;s FizzBuzz</a></li>
-<li><a href="#org4028aab">2.4.6. Logic Strategies</a></li>
-<li><a href="#org159f11d">2.4.7. &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</a></li>
-<li><a href="#orga641028">2.4.8. Byte 4</a></li>
-<li><a href="#orgddfd66b">2.4.9. &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</a></li>
+<li><a href="#org9b3b935">2.4.1. Parameters</a></li>
+<li><a href="#org0804beb">2.4.2. Buffer Size</a></li>
+<li><a href="#orge94c09f">2.4.3. Setup</a></li>
+<li><a href="#orgdb83837">2.4.4. i to a</a></li>
+<li><a href="#org5d422b7">2.4.5. Euler&rsquo;s FizzBuzz</a></li>
+<li><a href="#orge4b49e6">2.4.6. Logic Strategies</a></li>
+<li><a href="#orge597893">2.4.7. &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</a></li>
+<li><a href="#orgb64ef7e">2.4.8. Byte 4</a></li>
+<li><a href="#orgd66b936">2.4.9. &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org9bc262c">3. Building</a></li>
-<li><a href="#orga90240e">4. Potential Further Improvements</a></li>
+<li><a href="#orge1a129f">3. Building</a></li>
+<li><a href="#org199d2cf">4. Potential Further Improvements</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orge42a358" class="outline-2">
-<h2 id="orge42a358"><span class="section-number-2">1.</span> Introduction</h2>
+<div id="outline-container-org6f1ea2e" class="outline-2">
+<h2 id="org6f1ea2e"><span class="section-number-2">1.</span> Introduction</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-Okay, so a couple years back I was reading this great blog post titled &ldquo;Euler&rsquo;s Fizzbuzz&rdquo; (which you can find here:
+Okay, so a couple years back I was reading this great blog post titled &ldquo;Euler&rsquo;s Fizzbuzz&rdquo; (you can find it here:
 <a href="http://philcrissman.net/posts/eulers-fizzbuzz/">http://philcrissman.net/posts/eulers-fizzbuzz/</a>, read it!), which describes a really interesting technique for
 differentiating numbers by their prime factors with only simple integer arithmetic. One little piece of that post, right
 at the start, has been stuck in the back of my mind ever since I first read it:
@@ -298,12 +300,12 @@ I thought it&rsquo;d be fun to give that a try.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf33f588" class="outline-2">
-<h2 id="orgf33f588"><span class="section-number-2">2.</span> Implementation</h2>
+<div id="outline-container-org242c77a" class="outline-2">
+<h2 id="org242c77a"><span class="section-number-2">2.</span> Implementation</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-orgdfa59ca" class="outline-3">
-<h3 id="orgdfa59ca"><span class="section-number-3">2.1.</span> The Rules</h3>
+<div id="outline-container-org000bae7" class="outline-3">
+<h3 id="org000bae7"><span class="section-number-3">2.1.</span> The Rules</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 To be more specific than just &ldquo;no conditional logic&rdquo;, let&rsquo;s define a rule set for ourselves. We&rsquo;re not going to do any
@@ -329,8 +331,8 @@ interface with our FizzBuzz function and print the results.
 </p>
 </div>
 </div>
-<div id="outline-container-orgaf851a1" class="outline-3">
-<h3 id="orgaf851a1"><span class="section-number-3">2.2.</span> Project Structure</h3>
+<div id="outline-container-org2227e6f" class="outline-3">
+<h3 id="org2227e6f"><span class="section-number-3">2.2.</span> Project Structure</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 This project is split into two source files. The driver is written in C, and implements the outer loop and printing
@@ -338,7 +340,7 @@ logic; and our FizzBuzz function is written in x64 assembly, to avoid the compil
 behind our backs, and implements the following pseudocode logic:
 </p>
 
-<pre class="example" id="org2a71779">
+<pre class="example" id="org09439ee">
 if n % 3 == 0 &amp;&amp; n % 5 != 0:
   return "Fizz"
 if n % 3 != 0 &amp;&amp; n % 5 == 0:
@@ -350,18 +352,18 @@ if n % 3 != 0 &amp;&amp; n % 5 != 0:
 </pre>
 </div>
 </div>
-<div id="outline-container-orgbc2e7d2" class="outline-3">
-<h3 id="orgbc2e7d2"><span class="section-number-3">2.3.</span> The Driver</h3>
+<div id="outline-container-org5977549" class="outline-3">
+<h3 id="org5977549"><span class="section-number-3">2.3.</span> The Driver</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 The implementation of the driver is pretty simple. We import some standard headers:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #d33682;">#include</span> <span style="color: #2aa198;">&lt;stdio.h&gt;</span>
-<span style="color: #d33682;">#include</span> <span style="color: #2aa198;">&lt;stdlib.h&gt;</span>
+<pre class="src src-c"><span style="color: #e5786d;">#include</span> <span style="color: #95e454;">&lt;stdio.h&gt;</span>
+<span style="color: #e5786d;">#include</span> <span style="color: #95e454;">&lt;stdlib.h&gt;</span>
 
-<span style="color: #d33682;">#include</span> <span style="color: #2aa198;">&lt;stdint.h&gt;</span>
+<span style="color: #e5786d;">#include</span> <span style="color: #95e454;">&lt;stdint.h&gt;</span>
 </pre>
 </div>
 
@@ -370,7 +372,7 @@ and then our project-specific header (which we&rsquo;ll cover in a sec.), to lin
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #d33682;">#include</span> <span style="color: #2aa198;">"branchless_fizzbuzz.h"</span>
+<pre class="src src-c"><span style="color: #e5786d;">#include</span> <span style="color: #95e454;">"branchless_fizzbuzz.h"</span>
 </pre>
 </div>
 
@@ -379,10 +381,10 @@ and then we just allocate a character buffer for our assembly function, call it 
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #268bd2;">int</span> <span style="color: #b58900;">main</span>(<span style="color: #268bd2;">int</span> <span style="color: #6c71c4;">argc</span>, <span style="color: #268bd2;">char</span>* <span style="color: #6c71c4;">argv</span>[]) {
-    <span style="color: #268bd2;">char</span> <span style="color: #6c71c4;">buffer</span>[MIN_BUFFER_SIZE] = {0};
+<pre class="src src-c"><span style="color: #92a65e; font-weight: bold;">int</span> <span style="color: #cae682;">main</span>(<span style="color: #92a65e; font-weight: bold;">int</span> <span style="color: #cae682;">argc</span>, <span style="color: #92a65e; font-weight: bold;">char</span>* <span style="color: #cae682;">argv</span>[]) {
+    <span style="color: #92a65e; font-weight: bold;">char</span> <span style="color: #cae682;">buffer</span>[MIN_BUFFER_SIZE] = {0};
 
-    <span style="color: #859900;">for</span> (<span style="color: #268bd2;">uint64_t</span> <span style="color: #6c71c4;">i</span> = 1; i != 1000; i++) {
+    <span style="color: #8ac6f2; font-weight: bold;">for</span> (<span style="color: #92a65e; font-weight: bold;">uint64_t</span> <span style="color: #cae682;">i</span> = 1; i != 1000; i++) {
         bfb_fill_buffer(buffer, i);
 
         puts(buffer);
@@ -392,15 +394,15 @@ and then we just allocate a character buffer for our assembly function, call it 
 </div>
 </div>
 </div>
-<div id="outline-container-org6a82123" class="outline-3">
-<h3 id="org6a82123"><span class="section-number-3">2.4.</span> <code>bfb_fill_buffer</code></h3>
+<div id="outline-container-org09e7165" class="outline-3">
+<h3 id="org09e7165"><span class="section-number-3">2.4.</span> <code>bfb_fill_buffer</code></h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 Implementing <code>bfb_fill_buffer</code> is, of course, significantly more involved.
 </p>
 </div>
-<div id="outline-container-org8699771" class="outline-4">
-<h4 id="org8699771"><span class="section-number-4">2.4.1.</span> Parameters</h4>
+<div id="outline-container-org9b3b935" class="outline-4">
+<h4 id="org9b3b935"><span class="section-number-4">2.4.1.</span> Parameters</h4>
 <div class="outline-text-4" id="text-2-4-1">
 <p>
 First, let&rsquo;s define our parameters. As you can see from the driver code, we need two things: a buffer to write to, and
@@ -412,15 +414,15 @@ Let&rsquo;s define that in our header file:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #d33682;">#include</span> <span style="color: #2aa198;">&lt;stdint.h&gt;</span>   <span style="color: #93a1a1; font-style: italic;">// </span><span style="color: #93a1a1; font-style: italic;">ensure uint64_t is defined
+<pre class="src src-c"><span style="color: #e5786d;">#include</span> <span style="color: #95e454;">&lt;stdint.h&gt;</span>   <span style="color: #99968b;">// </span><span style="color: #99968b;">ensure uint64_t is defined
 </span>
-<span style="color: #268bd2;">void</span> <span style="color: #b58900;">bfb_fill_buffer</span>(<span style="color: #268bd2;">char</span>*, <span style="color: #268bd2;">uint64_t</span>);
+<span style="color: #92a65e; font-weight: bold;">void</span> <span style="color: #cae682;">bfb_fill_buffer</span>(<span style="color: #92a65e; font-weight: bold;">char</span>*, <span style="color: #92a65e; font-weight: bold;">uint64_t</span>);
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgf169ea6" class="outline-4">
-<h4 id="orgf169ea6"><span class="section-number-4">2.4.2.</span> Buffer Size</h4>
+<div id="outline-container-org0804beb" class="outline-4">
+<h4 id="org0804beb"><span class="section-number-4">2.4.2.</span> Buffer Size</h4>
 <div class="outline-text-4" id="text-2-4-2">
 <p>
 Second, let&rsquo;s hardcode the size of the output buffer. (Without conditional logic, we have no means to terminate loops &#x2013;
@@ -444,26 +446,26 @@ Let&rsquo;s encode this into our header file and into our assembly source:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #d33682;">#define</span> <span style="color: #6c71c4;">MIN_BUFFER_SIZE</span> 30
+<pre class="src src-c"><span style="color: #e5786d;">#define</span> <span style="color: #cae682;">MIN_BUFFER_SIZE</span> 30
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #d33682;">%assign</span> BUFF_SIZE <span style="color: #268bd2;">30</span>
+<pre class="src src-nasm"><span style="color: #e5786d;">%assign</span> BUFF_SIZE <span style="color: #e5786d;">30</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgc8f2af2" class="outline-4">
-<h4 id="orgc8f2af2"><span class="section-number-4">2.4.3.</span> Setup</h4>
+<div id="outline-container-orge94c09f" class="outline-4">
+<h4 id="orge94c09f"><span class="section-number-4">2.4.3.</span> Setup</h4>
 <div class="outline-text-4" id="text-2-4-3">
 <p>
 With that out of the way, let&rsquo;s actually start writing our assembly function. Here&rsquo;s our header:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #859900;">global</span> bfb_fill_buffer
-<span style="color: #b58900;">bfb_fill_buffer</span>:
+<pre class="src src-nasm"><span style="color: #8ac6f2; font-weight: bold;">global</span> bfb_fill_buffer
+<span style="color: #cae682;">bfb_fill_buffer</span>:
 </pre>
 </div>
 
@@ -537,8 +539,8 @@ use the stack.)
 </div>
 </div>
 </div>
-<div id="outline-container-org817322b" class="outline-4">
-<h4 id="org817322b"><span class="section-number-4">2.4.4.</span> i to a</h4>
+<div id="outline-container-orgdb83837" class="outline-4">
+<h4 id="orgdb83837"><span class="section-number-4">2.4.4.</span> i to a</h4>
 <div class="outline-text-4" id="text-2-4-4">
 <p>
 The first bit of logic we need to implement is to perform an integer-to-string conversion on <code>rsi</code>, writing the result
@@ -597,26 +599,26 @@ Registers used:
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">initial setup
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rsi</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">move our number into the bottom half of the rdx:rax register pair
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #268bd2;">10</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">we're doing a base 10 itoa
-</span><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">repeat for every digit
-</span><span style="color: #d33682;">%assign</span> i BUFF_SIZE - <span style="color: #268bd2;">2</span>
-<span style="color: #d33682;">%rep</span> BUFF_SIZE - <span style="color: #268bd2;">8</span> - <span style="color: #268bd2;">1</span> - <span style="color: #268bd2;">1</span>      <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">the size of the buffer, minus strlen("FizzBuzz\0"), minus the final NULL terminator
-</span>        <span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">zero the top half of rdx:rax
-</span>        <span style="color: #6c71c4;">div</span> <span style="color: #6c71c4;">rcx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rax now contains the quotient, and rdx the remainder
-</span>        <span style="color: #6c71c4;">add</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #2aa198;">'0'</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + i], <span style="color: #6c71c4;">dl</span>  <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">write to the buffer
-</span><span style="color: #d33682;">%assign</span> i i-1
-<span style="color: #d33682;">%endrep</span>
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">cleanup
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + BUFF_SIZE - <span style="color: #268bd2;">1</span>], <span style="color: #268bd2;">0</span> <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">null-terminate the buffer</span>
+<pre class="src src-nasm"><span style="color: #99968b;">;; </span><span style="color: #99968b;">initial setup
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rsi</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">move our number into the bottom half of the rdx:rax register pair
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rcx</span>, <span style="color: #e5786d;">10</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">we're doing a base 10 itoa
+</span><span style="color: #99968b;">;; </span><span style="color: #99968b;">repeat for every digit
+</span><span style="color: #e5786d;">%assign</span> i BUFF_SIZE - <span style="color: #e5786d;">2</span>
+<span style="color: #e5786d;">%rep</span> BUFF_SIZE - <span style="color: #e5786d;">8</span> - <span style="color: #e5786d;">1</span> - <span style="color: #e5786d;">1</span>      <span style="color: #99968b;">; </span><span style="color: #99968b;">the size of the buffer, minus strlen("FizzBuzz\0"), minus the final NULL terminator
+</span>        <span style="color: #e5786d;">xor</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rdx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">zero the top half of rdx:rax
+</span>        <span style="color: #e5786d;">div</span> <span style="color: #cae682;">rcx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rax now contains the quotient, and rdx the remainder
+</span>        <span style="color: #e5786d;">add</span> <span style="color: #cae682;">rdx</span>, <span style="color: #95e454;">'0'</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + i], <span style="color: #cae682;">dl</span>  <span style="color: #99968b;">; </span><span style="color: #99968b;">write to the buffer
+</span><span style="color: #e5786d;">%assign</span> i i-1
+<span style="color: #e5786d;">%endrep</span>
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">cleanup
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + BUFF_SIZE - <span style="color: #e5786d;">1</span>], <span style="color: #e5786d;">0</span> <span style="color: #99968b;">; </span><span style="color: #99968b;">null-terminate the buffer</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org61b638e" class="outline-4">
-<h4 id="org61b638e"><span class="section-number-4">2.4.5.</span> Euler&rsquo;s FizzBuzz</h4>
+<div id="outline-container-org5d422b7" class="outline-4">
+<h4 id="org5d422b7"><span class="section-number-4">2.4.5.</span> Euler&rsquo;s FizzBuzz</h4>
 <div class="outline-text-4" id="text-2-4-5">
 <p>
 Next, we&rsquo;ll use the &ldquo;Euler&rsquo;s FizzBuzz&rdquo; algorithm (\(n^4 \text{ mod } 15\)) to determine whether 3 and/or 5 are prime
@@ -674,17 +676,17 @@ Registers used:
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #268bd2;">15</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">magic constant, see aforementioned blog post
-</span><span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">zero upper half of rdx:rax
-</span><span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rsi</span>
-<span style="color: #6c71c4;">div</span> <span style="color: #6c71c4;">rcx</span>
-<span style="color: #6c71c4;">xchg</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rax</span>
-<span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = rsi mod 15
+<pre class="src src-nasm"><span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rcx</span>, <span style="color: #e5786d;">15</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">magic constant, see aforementioned blog post
+</span><span style="color: #e5786d;">xor</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rdx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">zero upper half of rdx:rax
+</span><span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rsi</span>
+<span style="color: #e5786d;">div</span> <span style="color: #cae682;">rcx</span>
+<span style="color: #e5786d;">xchg</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rax</span>
+<span style="color: #e5786d;">xor</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rdx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx:rax = rsi mod 15
 </span>
-<span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rax</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = (rsi mod 15)^2
-</span><span style="color: #6c71c4;">mul</span> <span style="color: #6c71c4;">rax</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx:rax = (rsi mod 15)^4
-</span><span style="color: #6c71c4;">div</span> <span style="color: #6c71c4;">rcx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx = (rsi^4) mod 15
-</span><span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">copy the result into rcx for safekeeping</span>
+<span style="color: #e5786d;">mul</span> <span style="color: #cae682;">rax</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx:rax = (rsi mod 15)^2
+</span><span style="color: #e5786d;">mul</span> <span style="color: #cae682;">rax</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx:rax = (rsi mod 15)^4
+</span><span style="color: #e5786d;">div</span> <span style="color: #cae682;">rcx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx = (rsi^4) mod 15
+</span><span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rcx</span>, <span style="color: #cae682;">rdx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">copy the result into rcx for safekeeping</span>
 </pre>
 </div>
 
@@ -897,8 +899,8 @@ Where &rsquo;?&rsquo; indicates we don&rsquo;t care what gets written.
 </div>
 </div>
 </div>
-<div id="outline-container-org4028aab" class="outline-4">
-<h4 id="org4028aab"><span class="section-number-4">2.4.6.</span> Logic Strategies</h4>
+<div id="outline-container-orge4b49e6" class="outline-4">
+<h4 id="orge4b49e6"><span class="section-number-4">2.4.6.</span> Logic Strategies</h4>
 <div class="outline-text-4" id="text-2-4-6">
 <p>
 Now that we know the factors of <code>rsi</code>, we can use that information to compose output bytes for each of the
@@ -918,7 +920,7 @@ In cases where there are only two possible options for what we&rsquo;ll want to 
 byte 8), we can use the following pseudocode procedure to set a register based on a condition:
 </p>
 
-<pre class="example" id="org7fc710f">
+<pre class="example" id="org257f08d">
 let is_a_or_b = 0 or 1, depending
 mask = is_a_or_b - 1
 
@@ -943,7 +945,7 @@ otherwise (<b>note that that&rsquo;s reversed!</b>).
 In pseudocode:
 </p>
 
-<pre class="example" id="orgcc5394e">
+<pre class="example" id="org56ff975">
 let is_a_or_b = 0 or 1, depending (value doesn't matter if it's c)
 mask = is_a_or_b - 1
 
@@ -974,8 +976,8 @@ between different characters.
 </p>
 </div>
 </div>
-<div id="outline-container-org159f11d" class="outline-4">
-<h4 id="org159f11d"><span class="section-number-4">2.4.7.</span> &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</h4>
+<div id="outline-container-orge597893" class="outline-4">
+<h4 id="orge597893"><span class="section-number-4">2.4.7.</span> &ldquo;Coprime to Both or Not&rdquo;-Specific Bytes</h4>
 <div class="outline-text-4" id="text-2-4-7">
 <p>
 For bytes 2, 3, 6, 7, and 8; we only need to discriminate depending on if <code>rdx</code> is equal to <code>1</code>, writing a <code>'0'</code> if so;
@@ -1030,35 +1032,35 @@ Registers used:
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">determine if rdx (rcx) is 1 or not
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rcx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">restore rdx
-</span>        <span style="color: #6c71c4;">dec</span> <span style="color: #6c71c4;">edx</span>
-        <span style="color: #6c71c4;">neg</span> <span style="color: #6c71c4;">rdx</span>
-        <span style="color: #6c71c4;">shr</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #268bd2;">63</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx is now 00h if it was 1, and 01h otherwise
-</span>        <span style="color: #6c71c4;">dec</span> <span style="color: #6c71c4;">rdx</span>
-        <span style="color: #6c71c4;">not</span> <span style="color: #6c71c4;">rdx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx is now 00h if it was 1, and FFFFFFFFFFFFFFFFh otherwise
+<pre class="src src-nasm"><span style="color: #99968b;">;; </span><span style="color: #99968b;">determine if rdx (rcx) is 1 or not
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rcx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">restore rdx
+</span>        <span style="color: #e5786d;">dec</span> <span style="color: #cae682;">edx</span>
+        <span style="color: #e5786d;">neg</span> <span style="color: #cae682;">rdx</span>
+        <span style="color: #e5786d;">shr</span> <span style="color: #cae682;">rdx</span>, <span style="color: #e5786d;">63</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx is now 00h if it was 1, and 01h otherwise
+</span>        <span style="color: #e5786d;">dec</span> <span style="color: #cae682;">rdx</span>
+        <span style="color: #e5786d;">not</span> <span style="color: #cae682;">rdx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx is now 00h if it was 1, and FFFFFFFFFFFFFFFFh otherwise
 </span>
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">set rax to '0' if rdx is 1, and NULL otherwise
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rdx</span>
-        <span style="color: #6c71c4;">not</span> <span style="color: #6c71c4;">rax</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #2aa198;">'0'</span>
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">set rax to '0' if rdx is 1, and NULL otherwise
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rdx</span>
+        <span style="color: #e5786d;">not</span> <span style="color: #cae682;">rax</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rax</span>, <span style="color: #95e454;">'0'</span>
 
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">set rdx to '0' if it was 1, and 'z' otherwise
-</span>        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #2aa198;">'z'</span> - <span style="color: #2aa198;">'0'</span>
-        <span style="color: #6c71c4;">add</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #2aa198;">'0'</span>
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">set rdx to '0' if it was 1, and 'z' otherwise
+</span>        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rdx</span>, <span style="color: #95e454;">'z'</span> - <span style="color: #95e454;">'0'</span>
+        <span style="color: #e5786d;">add</span> <span style="color: #cae682;">rdx</span>, <span style="color: #95e454;">'0'</span>
 
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">write our bytes
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">2</span>], <span style="color: #6c71c4;">dl</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">3</span>], <span style="color: #6c71c4;">dl</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">6</span>], <span style="color: #6c71c4;">dl</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">7</span>], <span style="color: #6c71c4;">dl</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">8</span>], <span style="color: #6c71c4;">al</span>
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">write our bytes
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">2</span>], <span style="color: #cae682;">dl</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">3</span>], <span style="color: #cae682;">dl</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">6</span>], <span style="color: #cae682;">dl</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">7</span>], <span style="color: #cae682;">dl</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">8</span>], <span style="color: #cae682;">al</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orga641028" class="outline-4">
-<h4 id="orga641028"><span class="section-number-4">2.4.8.</span> Byte 4</h4>
+<div id="outline-container-orgb64ef7e" class="outline-4">
+<h4 id="orgb64ef7e"><span class="section-number-4">2.4.8.</span> Byte 4</h4>
 <div class="outline-text-4" id="text-2-4-8">
 <p>
 For byte 4, the only byte where we need to distinguish based on the intended output&rsquo;s <i>length,</i> we can use bit position
@@ -1118,29 +1120,29 @@ Registers:
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm">        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rcx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">restore rdx
-</span>        <span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rax</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">zero rax, we'll compose our result in here
-</span><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">set up as though this weren't 6 or 10
-</span>        <span style="color: #6c71c4;">dec</span> <span style="color: #6c71c4;">rdx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx is now 00h if it was 1, and FFFFFFFFFFFFFFFFh if it was 0
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #2aa198;">'B'</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rax is now 'B' if rdx was 0 and 00h if rdx was 1
-</span>        <span style="color: #6c71c4;">not</span> <span style="color: #6c71c4;">rdx</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #2aa198;">'0'</span>
-        <span style="color: #6c71c4;">or</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rdx</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rax is now '0' if rdx was 1 and unchanged if rdx was 0
-</span><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">"is it 0 or 1" mask
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rcx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">restore rdx
-</span>        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #268bd2;">00000010b</span>
-        <span style="color: #6c71c4;">sub</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #268bd2;">00000010b</span>      <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx is now 00h if it was &gt; 1, else FFFFFFFFFFFFFFFFh
-</span>        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rdx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rax is now 00h (NULL) if rdx was &gt; 1
-</span><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">write our byte
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">4</span>], <span style="color: #6c71c4;">al</span>
+<pre class="src src-nasm">        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rcx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">restore rdx
+</span>        <span style="color: #e5786d;">xor</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rax</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">zero rax, we'll compose our result in here
+</span><span style="color: #99968b;">;; </span><span style="color: #99968b;">set up as though this weren't 6 or 10
+</span>        <span style="color: #e5786d;">dec</span> <span style="color: #cae682;">rdx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx is now 00h if it was 1, and FFFFFFFFFFFFFFFFh if it was 0
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rax</span>, <span style="color: #95e454;">'B'</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rdx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">rax is now 'B' if rdx was 0 and 00h if rdx was 1
+</span>        <span style="color: #e5786d;">not</span> <span style="color: #cae682;">rdx</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rdx</span>, <span style="color: #95e454;">'0'</span>
+        <span style="color: #e5786d;">or</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rdx</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">rax is now '0' if rdx was 1 and unchanged if rdx was 0
+</span><span style="color: #99968b;">;; </span><span style="color: #99968b;">"is it 0 or 1" mask
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rcx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">restore rdx
+</span>        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rdx</span>, <span style="color: #e5786d;">00000010b</span>
+        <span style="color: #e5786d;">sub</span> <span style="color: #cae682;">rdx</span>, <span style="color: #e5786d;">00000010b</span>      <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx is now 00h if it was &gt; 1, else FFFFFFFFFFFFFFFFh
+</span>        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rdx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">rax is now 00h (NULL) if rdx was &gt; 1
+</span><span style="color: #99968b;">;; </span><span style="color: #99968b;">write our byte
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">4</span>], <span style="color: #cae682;">al</span>
 
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgddfd66b" class="outline-4">
-<h4 id="orgddfd66b"><span class="section-number-4">2.4.9.</span> &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</h4>
+<div id="outline-container-orgd66b936" class="outline-4">
+<h4 id="orgd66b936"><span class="section-number-4">2.4.9.</span> &ldquo;Fizz vs Buzz vs <code>itoa</code>&rdquo;</h4>
 <div class="outline-text-4" id="text-2-4-9">
 <p>
 Finally, for bytes 0, 1 and 5, we need to discriminate based on whether <code>rdx</code> is equal to <code>1</code>, or if it&rsquo;s equal to <code>10</code>,
@@ -1270,51 +1272,51 @@ Registers:
 </div>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">is it 0 or 6? or is it something else?
-</span>        <span style="color: #6c71c4;">dec</span> <span style="color: #6c71c4;">rcx</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rcx</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #268bd2;">00000100b</span>      <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rax now contains 04h if rcx was 0 or 6, and 00h if it was 1 or 10
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rax</span>
-        <span style="color: #6c71c4;">or</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #2aa198;">'B'</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rax now contains 'F' if rcx was 0 or 6, and 'B' if it was 1 or 10
+<pre class="src src-nasm"><span style="color: #99968b;">;; </span><span style="color: #99968b;">is it 0 or 6? or is it something else?
+</span>        <span style="color: #e5786d;">dec</span> <span style="color: #cae682;">rcx</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rcx</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rax</span>, <span style="color: #e5786d;">00000100b</span>      <span style="color: #99968b;">; </span><span style="color: #99968b;">rax now contains 04h if rcx was 0 or 6, and 00h if it was 1 or 10
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rax</span>
+        <span style="color: #e5786d;">or</span> <span style="color: #cae682;">rax</span>, <span style="color: #95e454;">'B'</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">rax now contains 'F' if rcx was 0 or 6, and 'B' if it was 1 or 10
 </span>
-        <span style="color: #6c71c4;">shr</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #268bd2;">2</span>
-        <span style="color: #6c71c4;">dec</span> <span style="color: #6c71c4;">rdx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rdx now contains 00h if rcx was 0 or 6, and FFFFFFFFFFFFFFFFh if it was 1 or 10
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">r8</span>, <span style="color: #2aa198;">'u'</span> - <span style="color: #2aa198;">'0'</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">r8</span>, <span style="color: #6c71c4;">rdx</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">r8 now contains 'u' - '0' if rcx was 1 or 10, and 00h if it was 0 or 6
-</span>        <span style="color: #6c71c4;">not</span> <span style="color: #6c71c4;">rdx</span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">r11</span>, <span style="color: #6c71c4;">rdx</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #2aa198;">'i'</span> - <span style="color: #2aa198;">'0'</span>
-        <span style="color: #6c71c4;">or</span> <span style="color: #6c71c4;">r8</span>, <span style="color: #6c71c4;">rdx</span>              <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">r8 now contains 'i' - '0' if rcx was 0 or 6, and is unchanged if it was 1 or 10
+        <span style="color: #e5786d;">shr</span> <span style="color: #cae682;">rdx</span>, <span style="color: #e5786d;">2</span>
+        <span style="color: #e5786d;">dec</span> <span style="color: #cae682;">rdx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rdx now contains 00h if rcx was 0 or 6, and FFFFFFFFFFFFFFFFh if it was 1 or 10
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">r8</span>, <span style="color: #95e454;">'u'</span> - <span style="color: #95e454;">'0'</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">r8</span>, <span style="color: #cae682;">rdx</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">r8 now contains 'u' - '0' if rcx was 1 or 10, and 00h if it was 0 or 6
+</span>        <span style="color: #e5786d;">not</span> <span style="color: #cae682;">rdx</span>
+        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">r11</span>, <span style="color: #cae682;">rdx</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rdx</span>, <span style="color: #95e454;">'i'</span> - <span style="color: #95e454;">'0'</span>
+        <span style="color: #e5786d;">or</span> <span style="color: #cae682;">r8</span>, <span style="color: #cae682;">rdx</span>              <span style="color: #99968b;">; </span><span style="color: #99968b;">r8 now contains 'i' - '0' if rcx was 0 or 6, and is unchanged if it was 1 or 10
 </span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">r11</span>, <span style="color: #2aa198;">'u'</span>
-        <span style="color: #6c71c4;">or</span> <span style="color: #6c71c4;">r11</span>, <span style="color: #2aa198;">'0'</span>              <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">r11 now contains 'u' if rcx was 0 or 6, and '0' if it was 1 or 10
-</span><span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">write byte 5
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">5</span>], <span style="color: #6c71c4;">r11b</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">r11</span>, <span style="color: #95e454;">'u'</span>
+        <span style="color: #e5786d;">or</span> <span style="color: #cae682;">r11</span>, <span style="color: #95e454;">'0'</span>              <span style="color: #99968b;">; </span><span style="color: #99968b;">r11 now contains 'u' if rcx was 0 or 6, and '0' if it was 1 or 10
+</span><span style="color: #99968b;">;; </span><span style="color: #99968b;">write byte 5
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">5</span>], <span style="color: #cae682;">r11b</span>
 
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">but was it 1 all along?
-</span>        <span style="color: #6c71c4;">not</span> <span style="color: #6c71c4;">rcx</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #268bd2;">00000001b</span>      <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rcx now contains 01h if it was 1, and 00h otherwise
-</span>        <span style="color: #6c71c4;">dec</span> <span style="color: #6c71c4;">rcx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rcx now contains 00h if our initial rcx value was 1, and FFFFFFFFFFFFFFFFh otherwise
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">but was it 1 all along?
+</span>        <span style="color: #e5786d;">not</span> <span style="color: #cae682;">rcx</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rcx</span>, <span style="color: #e5786d;">00000001b</span>      <span style="color: #99968b;">; </span><span style="color: #99968b;">rcx now contains 01h if it was 1, and 00h otherwise
+</span>        <span style="color: #e5786d;">dec</span> <span style="color: #cae682;">rcx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rcx now contains 00h if our initial rcx value was 1, and FFFFFFFFFFFFFFFFh otherwise
 </span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">r8</span>, <span style="color: #6c71c4;">rcx</span>
-        <span style="color: #6c71c4;">add</span> <span style="color: #6c71c4;">r8</span>, <span style="color: #2aa198;">'0'</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">r8 now contains '0' if our initial rcx value was 1, 'u' if it was 10, and 'i' if it was 0 or 6
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">r8</span>, <span style="color: #cae682;">rcx</span>
+        <span style="color: #e5786d;">add</span> <span style="color: #cae682;">r8</span>, <span style="color: #95e454;">'0'</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">r8 now contains '0' if our initial rcx value was 1, 'u' if it was 10, and 'i' if it was 0 or 6
 </span>
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">write byte 1
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span> + <span style="color: #268bd2;">1</span>], <span style="color: #6c71c4;">r8b</span>
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">write byte 1
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span> + <span style="color: #e5786d;">1</span>], <span style="color: #cae682;">r8b</span>
 
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">wrap up "was it 1 all along?"
-</span>        <span style="color: #6c71c4;">not</span> <span style="color: #6c71c4;">rcx</span>                 <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">rcx now contains FFFFFFFFFFFFFFFFh if our initial rcx value was 1, and 00h otherwise
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">wrap up "was it 1 all along?"
+</span>        <span style="color: #e5786d;">not</span> <span style="color: #cae682;">rcx</span>                 <span style="color: #99968b;">; </span><span style="color: #99968b;">rcx now contains FFFFFFFFFFFFFFFFh if our initial rcx value was 1, and 00h otherwise
 </span>
-        <span style="color: #6c71c4;">mov</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #6c71c4;">rcx</span>
-        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rdx</span>, <span style="color: #2aa198;">'0'</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">our *set* mask
-</span>        <span style="color: #6c71c4;">and</span> <span style="color: #6c71c4;">rcx</span>, <span style="color: #6c71c4;">rax</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">our *unset* mask
+        <span style="color: #e5786d;">mov</span> <span style="color: #cae682;">rdx</span>, <span style="color: #cae682;">rcx</span>
+        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rdx</span>, <span style="color: #95e454;">'0'</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">our *set* mask
+</span>        <span style="color: #e5786d;">and</span> <span style="color: #cae682;">rcx</span>, <span style="color: #cae682;">rax</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">our *unset* mask
 </span>
 
-        <span style="color: #6c71c4;">xor</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rcx</span>            <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">sets rax to 0 if our initial rcx value was 1, otherwise leaves it unchanged
-</span>        <span style="color: #6c71c4;">or</span> <span style="color: #6c71c4;">rax</span>, <span style="color: #6c71c4;">rdx</span>             <span style="color: #93a1a1; font-style: italic;">; </span><span style="color: #93a1a1; font-style: italic;">sets rax to '0' if our initial rcx value was 1, otherwise leaves it unchanged
+        <span style="color: #e5786d;">xor</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rcx</span>            <span style="color: #99968b;">; </span><span style="color: #99968b;">sets rax to 0 if our initial rcx value was 1, otherwise leaves it unchanged
+</span>        <span style="color: #e5786d;">or</span> <span style="color: #cae682;">rax</span>, <span style="color: #cae682;">rdx</span>             <span style="color: #99968b;">; </span><span style="color: #99968b;">sets rax to '0' if our initial rcx value was 1, otherwise leaves it unchanged
 </span>
-<span style="color: #93a1a1; font-style: italic;">;; </span><span style="color: #93a1a1; font-style: italic;">write byte 0
-</span>        <span style="color: #6c71c4;">mov</span> <span style="color: #268bd2;">byte</span> [<span style="color: #6c71c4;">rdi</span>], <span style="color: #6c71c4;">al</span>
+<span style="color: #99968b;">;; </span><span style="color: #99968b;">write byte 0
+</span>        <span style="color: #e5786d;">mov</span> <span style="color: #92a65e; font-weight: bold;">byte</span> [<span style="color: #cae682;">rdi</span>], <span style="color: #cae682;">al</span>
 </pre>
 </div>
 
@@ -1323,15 +1325,15 @@ And with that, we&rsquo;re all done!
 </p>
 
 <div class="org-src-container">
-<pre class="src src-nasm"><span style="color: #6c71c4;">ret</span>
+<pre class="src src-nasm"><span style="color: #e5786d;">ret</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-org9bc262c" class="outline-2">
-<h2 id="org9bc262c"><span class="section-number-2">3.</span> Building</h2>
+<div id="outline-container-orge1a129f" class="outline-2">
+<h2 id="orge1a129f"><span class="section-number-2">3.</span> Building</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 This project requires make, YASM, gcc, and mkdir for building, and targets only systems which use the System V ABI.
@@ -1348,22 +1350,305 @@ from the build directory, run <code>make pristine</code>.
 </p>
 </div>
 </div>
-<div id="outline-container-orga90240e" class="outline-2">
-<h2 id="orga90240e"><span class="section-number-2">4.</span> Potential Further Improvements</h2>
+<div id="outline-container-org199d2cf" class="outline-2">
+<h2 id="org199d2cf"><span class="section-number-2">4.</span> Potential Further Improvements</h2>
 <div class="outline-text-2" id="text-4">
+<p>
+There are two obvious avenues of &ldquo;improvement&rdquo; that I&rsquo;m not going to take. They are as follows:
+</p>
+
 <ol class="org-ol">
-<li>Have the assembly portion return a pointer the beginning of the string, instead of just <i>assuming</i> it&rsquo;s the same as
-the start of the buffer. Would allow us to elide all those leading 0s.</li>
 <li>Replace the loop in the C driver with a <code>%rep</code> loop in the assembly portion of the project. If taken with #1, would
 probably involve passing a pair of buffers: one to write data to, and another to write pointers to the starts of each
 string. First buffer should probably be 32-byte aligned.</li>
-<li>Get better at assembly and find better and arcane-er ways to implement everything.</li>
+<li>Have the assembly portion return a pointer the beginning of the string, instead of just <i>assuming</i> it&rsquo;s the same as
+the start of the buffer, to allow elision of all those leading 0s.</li>
+</ol>
+
+<p>
+Refusing the first is, I think, easy pretty easy to justify: <b>it doesn&rsquo;t actually get rid of the loop in the driver.</b> We
+still have to go through all those strings! It would balloon the size of the binary for no benefit to purity.
+</p>
+
+<p>
+We could unroll this outer loop, of course, but we could do that without unrolling it inside <code>bfb_fill_buffer</code> too. The
+only <i>actual</i> purity benefit from this change would be the reduction in the number of calls to <code>bfb_fill_buffer</code>, down
+to just one. Ehhhhh.
+</p>
+
+<p>
+I reject the second &ldquo;improvement&rdquo; for a very different reason: it makes the problem too easy. If we can control the
+string window in the output buffer, our byte offset decision table simplifies down to this:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+</colgroup>
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right"><code>dl</code></th>
+<th scope="col" class="org-left">byte</th>
+<th scope="col" class="org-center">0</th>
+<th scope="col" class="org-center">1</th>
+<th scope="col" class="org-center">2</th>
+<th scope="col" class="org-center">3</th>
+<th scope="col" class="org-center">4</th>
+<th scope="col" class="org-center">5</th>
+<th scope="col" class="org-center">6</th>
+<th scope="col" class="org-center">7</th>
+<th scope="col" class="org-center">8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">0</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center"><code>'F'</code></td>
+<td class="org-center"><code>'i'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'B'</code></td>
+<td class="org-center"><code>'u'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>NULL</code></td>
+</tr>
+
+<tr>
+<td class="org-right">1</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+</tr>
+
+<tr>
+<td class="org-right">6</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center"><code>'F'</code></td>
+<td class="org-center"><code>'i'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>NULL</code></td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+</tr>
+
+<tr>
+<td class="org-right">10</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center"><code>'B'</code></td>
+<td class="org-center"><code>'u'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>NULL</code></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+or even <i>this:</i>
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+</colgroup>
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+</colgroup>
+
+<colgroup>
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+
+<col  class="org-center" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right"><code>dl</code></th>
+<th scope="col" class="org-left">byte</th>
+<th scope="col" class="org-center">0</th>
+<th scope="col" class="org-center">1</th>
+<th scope="col" class="org-center">2</th>
+<th scope="col" class="org-center">3</th>
+<th scope="col" class="org-center">4</th>
+<th scope="col" class="org-center">5</th>
+<th scope="col" class="org-center">6</th>
+<th scope="col" class="org-center">7</th>
+<th scope="col" class="org-center">8</th>
+<th scope="col" class="org-center">9</th>
+<th scope="col" class="org-center">10</th>
+<th scope="col" class="org-center">11</th>
+<th scope="col" class="org-center">12</th>
+<th scope="col" class="org-center">13</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">0</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center"><code>'F'</code></td>
+<td class="org-center"><code>'i'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'B'</code></td>
+<td class="org-center"><code>'u'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>NULL</code></td>
+</tr>
+
+<tr>
+<td class="org-right">1</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+</tr>
+
+<tr>
+<td class="org-right">6</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center"><code>'F'</code></td>
+<td class="org-center"><code>'i'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>NULL</code></td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+</tr>
+
+<tr>
+<td class="org-right">10</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center">?</td>
+<td class="org-center"><code>'B'</code></td>
+<td class="org-center"><code>'u'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>'z'</code></td>
+<td class="org-center"><code>NULL</code></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Besides the <code>itoa</code>, every byte offset can simply be set to a fixed value. The only problem to solve is the final
+pointer, which while interesting isn&rsquo;t <i>that</i> interesting. We calculate the base 10 logarithm (probably on the FPU) of
+the input, plus one; then either return it or some fixed value. Boring! I&rsquo;ll stick with my fixed width approach.
+</p>
+
+<p>
+The ways I <i>would</i> be interested in improving this project are as follows:
+</p>
+
+<ol class="org-ol">
+<li>Learn more about the x64 architecture and find cleverer ways to perform discrimination and option selection. Time to
+read the Intel Developer&rsquo;s Manual cover to cover!</li>
+<li>Somehow put the results into a single buffer with newlines separating results, instead of NULL terminators. This
+seems very possible, as any given block of fifteen results will be the same size as any other block so long as their
+starting and ending coprime numbers are of the same magnitude as the other&rsquo;s. Seems like a task for automated code
+generation? We&rsquo;ll see about this one.</li>
 </ol>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2025-09-14 Sun 00:52</p>
+<p class="date">Created: 2025-09-30 Tue 19:35</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

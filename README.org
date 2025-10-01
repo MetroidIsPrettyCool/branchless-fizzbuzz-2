@@ -1,3 +1,5 @@
+#+TITLE: No-Conditional Logic FizzBuzz in C + x64 assembly
+#+HTML_HEAD_EXTRA: <style> pre.src { background-color: black; color: white; }</style>
 * Org and GitHub                                                   :noexport:
 This README you're looking at right now is an [[https://orgmode.org/][org]] document. GitHub have parsed it into their custom extended markdown
 format for your convenience, and they haven't done it very well.
@@ -6,7 +8,7 @@ Please clone this repo and take a look at [[./README.html]] instead; or open thi
 seeing some of the guts. (Blocks marked for noexport, formatting configuration, other stuff that makes the HTML more
 legible and this less.)
 * Introduction
-Okay, so a couple years back I was reading this great blog post titled "Euler's Fizzbuzz" (which you can find here:
+Okay, so a couple years back I was reading this great blog post titled "Euler's Fizzbuzz" (you can find it here:
 http://philcrissman.net/posts/eulers-fizzbuzz/, read it!), which describes a really interesting technique for
 differentiating numbers by their prime factors with only simple integer arithmetic. One little piece of that post, right
 at the start, has been stuck in the back of my mind ever since I first read it:
@@ -534,9 +536,53 @@ To build, just clone the repo, navigate to the root directory, and run ~make~. T
 To remove all build products from the build directory, run ~make clean~. To remove all build products /and/ the binary
 from the build directory, run ~make pristine~.
 * Potential Further Improvements
-1. Have the assembly portion return a pointer the beginning of the string, instead of just /assuming/ it's the same as
-   the start of the buffer. Would allow us to elide all those leading 0s.
-2. Replace the loop in the C driver with a ~%rep~ loop in the assembly portion of the project. If taken with #1, would
+There are two obvious avenues of "improvement" that I'm not going to take. They are as follows:
+
+1. Replace the loop in the C driver with a ~%rep~ loop in the assembly portion of the project. If taken with #1, would
    probably involve passing a pair of buffers: one to write data to, and another to write pointers to the starts of each
    string. First buffer should probably be 32-byte aligned.
-3. Get better at assembly and find better and arcane-er ways to implement everything.
+2. Have the assembly portion return a pointer the beginning of the string, instead of just /assuming/ it's the same as
+   the start of the buffer, to allow elision of all those leading 0s.
+
+Refusing the first is, I think, easy pretty easy to justify: *it doesn't actually get rid of the loop in the driver.* We
+still have to go through all those strings! It would balloon the size of the binary for no benefit to purity.
+
+We could unroll this outer loop, of course, but we could do that without unrolling it inside ~bfb_fill_buffer~ too. The
+only /actual/ purity benefit from this change would be the reduction in the number of calls to ~bfb_fill_buffer~, down
+to just one. Ehhhhh.
+
+I reject the second "improvement" for a very different reason: it makes the problem too easy. If we can control the
+string window in the output buffer, our byte offset decision table simplifies down to this:
+
+| ~dl~ | byte |   0   |   1   |   2   |   3   |   4    |   5   |   6   |   7   |   8    |
+|    / | <    |       |       |       |       |        |       |       |       |   >    |
+|      |      |  <c>  |  <c>  |  <c>  |  <c>  |  <c>   |  <c>  |  <c>  |  <c>  |  <c>   |
+|------+------+-------+-------+-------+-------+--------+-------+-------+-------+--------|
+|    0 |      | ~'F'~ | ~'i'~ | ~'z'~ | ~'z'~ | ~'B'~  | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ |
+|    1 |      |   ?   |   ?   |   ?   |   ?   |   ?    |   ?   |   ?   |   ?   |   ?    |
+|    6 |      | ~'F'~ | ~'i'~ | ~'z'~ | ~'z'~ | ~NULL~ |   ?   |   ?   |   ?   |   ?    |
+|   10 |      |   ?   |   ?   |   ?   |   ?   | ~'B'~  | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ |
+
+or even /this:/
+
+| ~dl~ | byte |   0   |   1   |   2   |   3   |   4    |   5   |   6   |   7   |   8   |   9   |  10   |  11   |  12   |   13   |
+|    / | <    |       |       |       |       |        |       |       |       |   >   |       |       |       |       |        |
+|      |      |  <c>  |  <c>  |  <c>  |  <c>  |  <c>   |  <c>  |  <c>  |  <c>  |  <c>  |  <c>  |  <c>  |  <c>  |  <c>  |  <c>   |
+|------+------+-------+-------+-------+-------+--------+-------+-------+-------+-------+-------+-------+-------+-------+--------|
+|    0 |      |   ?   |   ?   |   ?   |   ?   |   ?    | ~'F'~ | ~'i'~ | ~'z'~ | ~'z'~ | ~'B'~ | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ |
+|    1 |      |   ?   |   ?   |   ?   |   ?   |   ?    |   ?   |   ?   |   ?   |   ?   |   ?   |   ?   |   ?   |   ?   |   ?    |
+|    6 |      | ~'F'~ | ~'i'~ | ~'z'~ | ~'z'~ | ~NULL~ |   ?   |   ?   |   ?   |   ?   |   ?   |   ?   |   ?   |   ?   |   ?    |
+|   10 |      |   ?   |   ?   |   ?   |   ?   |   ?    |   ?   |   ?   |   ?   |   ?   | ~'B'~ | ~'u'~ | ~'z'~ | ~'z'~ | ~NULL~ |
+
+Besides the ~itoa~, every byte offset can simply be set to a fixed value. The only problem to solve is the final
+pointer, which while interesting isn't /that/ interesting. We calculate the base 10 logarithm (probably on the FPU) of
+the input, plus one; then either return it or some fixed value. Boring! I'll stick with my fixed width approach.
+
+The ways I /would/ be interested in improving this project are as follows:
+
+1. Learn more about the x64 architecture and find cleverer ways to perform discrimination and option selection. Time to
+   read the Intel Developer's Manual cover to cover!
+2. Somehow put the results into a single buffer with newlines separating results, instead of NULL terminators. This
+   seems very possible, as any given block of fifteen results will be the same size as any other block so long as their
+   starting and ending coprime numbers are of the same magnitude as the other's. Seems like a task for automated code
+   generation? We'll see about this one.
